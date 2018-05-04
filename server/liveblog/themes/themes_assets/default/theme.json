@@ -1,31 +1,26 @@
 {
-    "label": "Liveblog 3 Default SEO Theme",
-    "name": "default",
-    "version": "3.3.54",
+    "label": "ZEIT ONLINE Default Theme",
+    "name": "zon-default",
+    "version": "3.3.53",
     "asyncTheme": true,
     "seoTheme": true,
-    "author": "Sourcefabric <contact@sourcefabric.org>",
-    "contributors": [
-        "Paul Solbach <psolbach@dpa-newslab.com>",
-        "Massimo Scamarcia <massimo.scamarcia@sourcefabric.org>",
-        "Löic Nogues <loic.nogues@sourcefabric.org>",
-        "Aleksandar Backo Jelicic <aleksandar.jelicic@sourcefabric.org>"
-    ],
+    "author": "ZEIT ONLINE <kontakt@zeit.de>",
+    "contributors": ["Tobias Weiß <tobias.weiss@zeit.de>"],
     "repository": {
         "type" : "git",
-        "url" : "git@github.com:liveblog/liveblog-default-theme"
+        "url" : "git@github.com:ZeitOnline/liveblog-default-theme.git"
     },
     "license": "AGPL-3.0",
-    "devStyles": ["dist/default-b42bdaaf3c.css"],
-    "devScripts": ["dist/default-23cedb75db.js"],
-    "styles": ["dist/default-b42bdaaf3c.css"],
-    "scripts": ["dist/default-23cedb75db.js"],
+    "devStyles": ["dist/zon-default-ddacaa82a5.css"],
+    "devScripts": ["dist/zon-default-5c4d6881fc.js"],
+    "styles": ["dist/zon-default-ddacaa82a5.css"],
+    "scripts": ["dist/zon-default-5c4d6881fc.js"],
     "options": [
         {
             "name": "datetimeFormat",
             "label": "Date time Format",
             "type": "datetimeformat",
-            "default": "lll",
+            "default": "LL",
             "help": "Sets the date time format to be used in the embed. Please enter a custom format in valid moment.js format http://momentjs.com/docs/#/parsing/string-format"
         },
         {
@@ -51,7 +46,7 @@
                 {"value": "newest_first", "label": "Newest first"},
                 {"value": "oldest_first", "label": "Oldest first"}
             ],
-            "default": "editorial"
+            "default": "newest_first"
         },
         {
             "name": "autoApplyUpdates",
@@ -89,7 +84,7 @@
             "name": "showLiveblogLogo",
             "label": "Show Liveblog logo",
             "type": "checkbox",
-            "default": true,
+            "default": false,
             "help": "Turn off to hide the “powered by Live Blog” logo"
         },
         {
@@ -128,7 +123,7 @@
             "name": "hasHighlights",
             "label": "Show highlight button",
             "type": "checkbox",
-            "default": false,
+            "default": true,
             "help": "Introduces a button for the readers to filter the timeline by highlights"
         },
         {
@@ -159,7 +154,7 @@
             "name": "showGallery",
             "label": "Show slideshow gallery",
             "type": "checkbox",
-            "default": false,
+            "default": true,
             "help": "Multiple image posts will show up as an image gallery"
         },
         {
@@ -185,7 +180,7 @@
             "name": "renderForESI",
             "label": "Optimise the Live Blog output for ESI",
             "type": "checkbox",
-            "default": false,
+            "default": true,
             "help": "Strips the head and body tags from the Live Blog output to publish it using Edge Side Includes"
         },
         {
@@ -233,7 +228,7 @@
                     "label": "Română"
                 }
             ],
-            "default": "en"
+            "default": "de"
         },
         {
             "name": "showSyndicatedAuthor",

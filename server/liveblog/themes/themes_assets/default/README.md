@@ -1,69 +1,30 @@
-# Liveblog 3 SEO Theme
+# ZON Default Theme für Liveblog v3
 
-User-friendly, indexable and fast Liveblog theme. 
-
-## Compatibility
-This theme requires Live Blog version 3.3 or higher. 
-
-## Develop
-
-The best starting point for the development of custom theme extensions is our Wiki: https://wiki.sourcefabric.org/x/wICrB
-
---
-
-Just issue a `npm i` followed by `gulp watch-static`.    
-Development server is up and running at `localhost:8008`.    
-Entry point for Browserify is `js/liveblog.js`.
-
-you can also point to an existing liveblog api entry point by add a `--embedUrl` param.
-
-```shell
-gulp watch-static --embedUrl http://undefined.local:5000/embed/592ec5d15e543257f9f6ffc6
+- fork von [Liveblog Default Theme](https://github.com/liveblog/liveblog-default-theme)
+- Aktualisierungen von Sourcefabric sollten regelmäßig von deren Repo in den `master` gemerged werden.
+```
+git remote add liveblog git@github.com:liveblog/liveblog-default-theme.git
 ```
 
-## Build
+### Development
 
-Use `make` or alternatively zip this directory without the `node_modules` and `.git` folders.
+- Node Module installieren: `yarn install`
+- Lokalen Development Server starten: `node_modules/.bin/gulp watch-static`
+- Remote Blog lokal sehen und entwickeln: `node_modules/.bin/gulp watch-static --embedUrl https://zeit-api.liveblog.pro/api/client_blogs/59fc7f146aa4f500eb121f90/posts` (URL durch API Endpoint des Blogs ersetzen)
+- SASS: Einstiegspunkt ist `sass/zon-default.sass`, die muss so heißen, wie in `theme.json` unter `name` vereinbart.
 
-## Documentation
+### Konfiguration
 
-Generate documentation via `jsdoc`.
+- in `theme.json` für das Distro-Theme
+- in `test/options.json` für die lokale Entwicklungsumgebung
 
-### Full screen in the parent page
+### Theme bauen und in den [Theme-Manager](https://zeit.liveblog.pro/#/themes/) hochladen
 
-When embedding liveblog, you want to have to have the fullscreen mode the slideshow taking all the available space. For this you need to modify the embed code as follow:
+- Liveblog Backend Credentials und ein paar mehr Infos gibt's im Ticket [ZON-4282](https://zeit-online.atlassian.net/browse/ZON-4282) und im dazugehörigen Epic.
+- `make` im Wurzelverzeichnis erstellt mittels `gulp` ein Release, generiert dazu alle benötigten Assets und Templates und erzeugt eine ZIP-Datei, die manuell in den [Theme-Manager](https://zeit.liveblog.pro/#/themes/) hochgeladen werden kann.
 
-```html
-<iframe id="liveblog-iframe" width="100%" height="715" src="http://localhost:8008/" frameborder="0" allowfullscreen></iframe>
-<script type="text/javascript">
-  var liveblog = document.getElementById('liveblog-iframe')
+### Good to know
 
-  liveblog.addEventListener('load', () => {
-    var receiver = liveblog.contentWindow;
-    var url = liveblog.getAttribute('src');
-
-    receiver.postMessage(window.location.href, url);
-
-    window.addEventListener('message', function(e) {
-      if (e.data === 'fullscreen') {
-        liveblog.style.cssText = 'position: fixed; top: 0; bottom: 0; left: 0; right: 0; width: 100%; height: 100%';
-      } else {
-        liveblog.style.cssText = '';
-      }
-    });
-  });
-</script>
-```
-
-or the compressed version:
-
-```html
-<iframe id="liveblog-iframe" width="100%" height="715" src="http://localhost:8008/" frameborder="0" allowfullscreen></iframe>
-<script type="text/javascript">
-var l=document.getElementById("liveblog-iframe");l.addEventListener("load",function(){var t=l.contentWindow,e=l.getAttribute("src");t.postMessage(window.location.href,e),window.addEventListener("message",function(t){"fullscreen"===t.data?l.style.cssText="position:fixed;top:0;bottom:0;left:0;right:0;width:100%;height: 100%":l.style.cssText=""})});
-</script>
-```
-
-## License
-
-Liveblog 3 is licensed under AGPL v3, as is this theme.
+- Davids Layouts liegen [hier](https://www.dropbox.com/sh/em8rh72upjl01u8/AADNxwtrPq-ZeAtWKc0VMj8-a?dl=0)
+- einen Hinweis, wie man an den individuellen API-Endpunkt des jeweiligen Blogs kommt und Source-Fabric Doku gibt's [hier](https://wiki.sourcefabric.org/display/LIVEBLOG/Themes+-+the+theme+generator)
+- Um die lokale Abhängigkeit des Solo-Themes vom Default-Theme zu aktualisieren (also Änderungen im `master` für `zon-default-solo` zu übernehmen) kann man `yarn upgrade --force liveblog-zon-amp-theme` ausführen. Das aktualisiert dann alle _vererbten Dateien_, wie die HTML-Templates, SCSS-dateien und das gulpfile.js.
