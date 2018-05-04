@@ -272,18 +272,21 @@ function hideLoadMore(hide) {
 }
 
 /**
- * Delete post <article> DOM node by data attribute.
- * @param {string} - a post URN
+ * Update datetime DOM nodes by data attribute.
  */
 function updateTimestamps() {
   var dateElems = helpers.getElems("relativeDate");
   for (var i = 0; i < dateElems.length; i++) {
     var elem = dateElems[i]
-      , timestamp = elem.dataset.jsTimestamp;
+      , timestamp = elem.dataset.jsTimestamp
+      , content = helpers.convertTimestamp(timestamp);
+
     elem.classList.remove('mod--displaynone');
-    elem.textContent = helpers.convertTimestamp(timestamp);
+
+    if (elem.textContent !== content) {
+      elem.textContent = content;
+    }
   }
-  return null;
 }
 
 function showSuccessCommentMsg() {
