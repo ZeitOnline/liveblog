@@ -1,7 +1,7 @@
 {
-  "name": "liveblog-zon-default-theme",
-  "version": "3.3.54",
-  "description": "ZEIT ONLINE Default Theme",
+  "name": "liveblog-zon-default-solo-theme",
+  "version": "3.3.53",
+  "description": "ZEIT ONLINE Default Theme - Solo",
   "author": "ZEIT ONLINE <kontakt@zeit.de>",
   "license": "AGPL-3.0",
   "main": "js/liveblog.js",
