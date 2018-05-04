@@ -235,7 +235,11 @@ function toggleSortBtn(name) {
 
     el.classList.toggle('sorting-bar__order--active', shouldBeActive);
     if (shouldBeActive) {
-      document.querySelector('.sorting-bar__dropdownBtn').innerHTML = el.innerHTML;
+      var dropdownBtn = document.querySelector('.sorting-bar__dropdownBtn');
+
+      if (dropdownBtn) {
+        dropdownBtn.innerHTML = el.innerHTML;
+      }
     }
   });
   toggleSortDropdown(false);
@@ -246,12 +250,14 @@ function toggleSortBtn(name) {
  * @param {Boolean} open
  */
 function toggleSortDropdown(open) {
-  if (open !== undefined) {
-    document.querySelector('.sorting-bar__dropdownContent')
-      .classList.toggle('sorting-bar__dropdownContent--active', open);
-  } else {
-    document.querySelector('.sorting-bar__dropdownContent')
-      .classList.toggle('sorting-bar__dropdownContent--active');
+  var dropdownContent = document.querySelector('.sorting-bar__dropdownContent');
+
+  if (dropdownContent) {
+    if (open !== undefined) {
+      dropdownContent.classList.toggle('sorting-bar__dropdownContent--active', open);
+    } else {
+      dropdownContent.classList.toggle('sorting-bar__dropdownContent--active');
+    }
   }
 }
 
