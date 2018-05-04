@@ -30,41 +30,22 @@
 
   <!-- Header -->
   <div class="header-bar">
-    <div class="sorting-bar">
-      <div class="sorting-bar__orders">
-        <div class="sorting-bar__dropdownBtn" data-js-sort_dropdown_button>
-          {% if settings.postOrder == 'editorial' %}
-            {{  translate("Editorial") }}
-          {% elif settings.postOrder == 'newest_first' %}
-            {{  translate("Newest first") }}
-          {% elif settings.postOrder == 'oldest_first' %}
-            {{ translate("Oldest first") }}
-          {% endif %}
-        </div>
-        <div class="sorting-bar__dropdownContent">
-          <div
-            class="sorting-bar__order {%if settings.postOrder == 'editorial' %}sorting-bar__order--active{% endif %}"
-            data-js-orderby_editorial>
-            {{  translate("Editorial") }}
-          </div>
-          <div
-            class="sorting-bar__order {%if settings.postOrder == 'newest_first' %}sorting-bar__order--active{% endif %}"
-            data-js-orderby_descending>
-            {{  translate("Newest first") }}
-          </div>
-          <div
-            class="sorting-bar__order {%if settings.postOrder == 'oldest_first'%}sorting-bar__order--active{% endif %}"
-            data-js-orderby_ascending>
-            {{ translate("Oldest first") }}
-          </div>
-        </div>
+    <div class="header-bar__divider--yellow"></div>
+    <div class="header-bar__interaction">
+      <div class="header-bar__align-wrapper"> <!-- align menu items w/ post's content -->
+        <span class="sorting-bar__order
+          {%- if settings.postOrder == 'newest_first' %} sorting-bar__order--active{% endif %}" data-js-orderby_descending>
+          {{  translate("Newest first") }}
+        </span>
+        <span class="sorting-bar__order
+          {%- if settings.postOrder == 'oldest_first'%} sorting-bar__order--active{% endif %}" data-js-orderby_ascending>
+          {{ translate("Oldest first") }}
+        </span>
+        {% if settings.hasHighlights -%}
+          <span class="header-bar__highlight" data-js-show-highlighted>&#9733; <span>Das Wichtigste</span></span>
+        {% endif -%}
       </div>
     </div>
-    <div class="header-bar__actions"></div>
-      {% if settings.hasHighlights %}
-          <button class="header-bar__highlight" data-js-show-highlighted><span>{{ translate('Highlights') }}</span></button>
-      {% endif %}
-
       {% if settings.canComment %}
         <button class="header-bar__comment" data-js-show-comment-dialog>
             {{ translate("Comment") }}
@@ -94,10 +75,10 @@
 
   <!-- Timeline -->
   <div class="timeline-body timeline-body--loaded">
-      <div data-one-new-update class="lb-post new-updates mod--displaynone">
+      <div data-one-new-update class="lb-button mod--displaynone">
         <div>{{ translate("See one new update") }}</div>
       </div>
-      <div data-new-updates class="lb-post new-updates mod--displaynone">
+      <div data-new-updates class="lb-button mod--displaynone">
         <div>{{ translate("See new updates") }}</div>
       </div>
     {% if settings.stickyPosition == 'bottom' %}
