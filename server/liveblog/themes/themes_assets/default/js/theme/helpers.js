@@ -9,11 +9,14 @@ var moment = require('moment'),
 
 require("moment/min/locales.min");
 moment.locale(settings.language);
-function convertTimestamp(timestamp) {
-  if (!settings.datetimeFormat || settings.datetimeFormat === 'ago') {
+
+function convertTimestamp(timestamp, format) {
+  var datetimeFormat = format || settings.datetimeFormat;
+
+  if (!datetimeFormat || datetimeFormat === 'ago') {
     return moment(timestamp).fromNow();
   }
-  return moment(timestamp).format(settings.datetimeFormat);
+  return moment(timestamp).format(datetimeFormat);
 }
 
 /**
