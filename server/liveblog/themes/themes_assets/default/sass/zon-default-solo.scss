@@ -1,0 +1,31 @@
+@import "zon-default";
+
+.lb-post {
+	padding-left: 20px;
+}
+
+.lb-items-container {
+	&:before {
+		content: none !important;
+	}
+}
+
+.lb-post-metadata {
+	font-size: 14px;
+	margin-left: 0;
+	text-transform: none;
+
+	&__time {
+		display: none;
+	}
+}
+
+.lb-post--highlighted {
+	.lb-post-metadata__date {
+		&::before {
+			color: $color-highlight;
+			content: "\2605";
+			margin-right: 8px;
+		}
+	}
+}
