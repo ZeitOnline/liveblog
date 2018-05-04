@@ -1,8 +1,9 @@
 {
-  "name": "liveblog-amp-theme",
+  "name": "liveblog-zon-amp-theme",
   "version": "3.3.22",
-  "description": "Liveblog 3 AMP theme",
-  "author": "Sourcefabric <contact@sourcefabric.org>",
+  "description": "ZEIT ONLINE AMP Theme",
+  "author": "ZEIT ONLINE <kontakt@zeit.de>",
+  "repository": "git@github.com:ZeitOnline/liveblog-amp-theme.git",
   "license": "AGPL-3.0",
   "main": "js/liveblog.js",
   "scripts": {
