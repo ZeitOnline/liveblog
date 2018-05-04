@@ -1,0 +1,72 @@
+.lb-post-metadata {
+	position: relative;
+	font-size: rem(13px);
+	letter-spacing: 0.03em;
+	margin-left: -31px;
+	text-transform: uppercase;
+	z-index: 2;
+
+	@include respond-min($break-tablet-min) {
+		margin-left: -42px;
+	}
+
+	@include respond-min($break-desktop-min) {
+		margin-left: -84px;
+	}
+
+	&__status {
+		&--pinned {
+			background-color: #444;
+			background-image: url('../images/pinned.svg');
+			background-position: 49%;
+			background-repeat: no-repeat;
+			background-size: 40%;
+			border-radius: 4px;
+			display: inline-block;
+			height: 24px;
+			margin-right: 8px;
+			vertical-align: middle;
+			width: 24px;
+		}
+		&--highlighted {
+			color: $color-highlight;
+			margin-right: 4px;
+		}
+	}
+	&__time {
+		@include font-smoothing;
+		background-color: $grey--mid;
+		border-radius: 4px;
+		box-sizing: border-box;
+		color: #fff;
+		display: inline-block;
+		font-weight: bold;
+		margin-right: 10px;
+		min-width: 109px;
+		padding: 4px 10px 3px;
+		text-align: center;
+		box-shadow: 0 0 0 10px $grey--light;
+
+		&::after {
+			content: ' Uhr';
+		}
+	}
+}
+
+.sticky {
+	.lb-post-metadata {
+		margin-left: 0;
+
+		&__time {
+			@include font-smoothing(false);
+			background-color: transparent;
+			border-radius: 0;
+			border-right: 1px solid currentColor;
+			color: inherit;
+			font-weight: normal;
+			margin: 0 8px 0 0;
+			min-width: 0;
+			padding: 0 8px 0 0;
+		}
+	}
+}

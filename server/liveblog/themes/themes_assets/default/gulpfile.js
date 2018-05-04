@@ -12,9 +12,10 @@ const path = require('path');
 const nunjucks = require('nunjucks');
 const dateFilter = require('nunjucks-date-filter');
 const amphtmlValidator = require('amphtml-validator');
+const sourcemaps = require('gulp-sourcemaps');
 
 const CWD = process.cwd();
-var DEBUG = plugins.util.env.NODE_ENV ? plugins.util.env.NODE_ENV : process.env.NODE_ENV !== "production";
+var DEBUG = process.env.NODE_ENV !== "production";
 
 // Command-line and default theme options from theme.json.
 let theme = {};
@@ -217,7 +218,7 @@ const nunjucksOptions = {
 nunjucks.env = nunjucksEnv;
 
 const paths = {
-  less: 'less/*.less',
+  sass: 'sass/**/*.scss',
   js: ['js/*.js', 'js/*/*.js'],
   jsfile: 'liveblog.js', // Browserify basedir
   cssfile: path.resolve(inputPath, 'liveblog.css'),
@@ -284,26 +285,31 @@ gulp.task('browserify', browserifyPreviousTasks, (cb) => {
     .pipe(gulp.dest('.'));
 });
 
-const lessCommon = (cleanCss) => {
-  const lessFiles = [];
-  let themeLess;
+const sassCommon = () => {
+  var sassFiles = [];
 
   // process inherited styles from extended theme first
   // this makes it easier to override rules with this theme's CSS and avoids specificity war
   if ( !theme.onlyOwnCss && theme.extends ) {
-    themeLess = path.resolve(`${inputPath}/less/${theme.extends}.less`);
-    lessFiles.push(fs.existsSync(themeLess) ? themeLess : path.resolve(`${inputPath}/less/*.less`));
+    let themeSass = path.resolve(`${inputPath}/sass/${theme.extends}.scss`);
+    sassFiles.push(fs.existsSync(themeSass) ? themeSass : path.resolve(`${inputPath}/sass/*.scss`));
   }
 
-  // Name of the less theme file.
-  themeLess = `./less/${theme.name}.less`;
-  // Compile all the files under the less folder if no theme less file pressent.
-  lessFiles.push(fs.existsSync(themeLess) ? themeLess : './less/*.less');
+  // Name of the sass theme file.
+  let themeSass = `./sass/${theme.name}.scss`;
+  // Compile all the files under the sass folder if no theme sass file pressent.
+  sassFiles.push(fs.existsSync(themeSass) ? themeSass : './sass/*.scss');
 
-  return gulp.src(lessFiles)
-    .pipe(plugins.less({
-      paths: [path.resolve(inputPath, 'less')]
+  return gulp.src(sassFiles)
+    .pipe(plugins.if(DEBUG, sourcemaps.init()))
+    .pipe(plugins.sass({
+      sourcemap: DEBUG,
+      sourcemapPath: './sass'
     }))
+    .on('error', function(error) {
+      console.error(error);
+      this.emit('end');
+    })
     .pipe(plugins.autoprefixer({
       flexbox: 'no-2009'
     }))
@@ -334,13 +340,17 @@ const lessCommon = (cleanCss) => {
      * all posts above needs to be added and then enable purifycss.
      * otherwise purifycss will remove those css "unused"/not present.
     */
-    //.pipe(plugins.if(cleanCss, plugins.purifycss([BUILD_HTML])))
-    .pipe(plugins.if(cleanCss, plugins.cleanCss({compatibility: 'ie8'})));
+    //.pipe(plugins.if(!DEBUG, plugins.purifycss([BUILD_HTML])))
+    .pipe(plugins.if(!DEBUG, plugins.cleanCss({
+      rebase: false,
+      compatibility: 'ie8'
+    })))
+    .pipe(plugins.if(DEBUG, sourcemaps.write()));
 };
 
-// Compile LESS files.
-gulp.task('less', ['clean-css'], () =>
-    lessCommon(!DEBUG)
+// Compile SASS files.
+gulp.task('sass', ['clean-css'], () =>
+    sassCommon()
     .pipe(plugins.concat(`${theme.name}.css`))
     .pipe(plugins.rev())
     .pipe(gulp.dest('./dist'))
@@ -350,7 +360,7 @@ gulp.task('less', ['clean-css'], () =>
 
 
 // Inject API response into template for dev/test purposes.
-gulp.task('index-inject', ['less', 'browserify'], () => {
+gulp.task('index-inject', ['sass', 'browserify'], () => {
   var testdata = require(path.resolve(`${CWD}/test`));
   var sources = gulp.src(['./dist/*.js', './dist/*.css'], {
     read: false // We're only after the file paths
@@ -374,7 +384,7 @@ gulp.task('index-inject', ['less', 'browserify'], () => {
 
   if (theme.ampTheme) {
     indexTask = indexTask.pipe(plugins.inject(
-      lessCommon(false),
+      sassCommon(),
       {
         starttag: '<!-- inject:amp-styles -->',
         transform: function(filepath, file) {
@@ -411,7 +421,7 @@ gulp.task('amp-validate', [], () => {
 
 
 // Inject jinja/nunjucks template for production use.
-gulp.task('template-inject', ['less', 'browserify'], () => {
+gulp.task('template-inject', ['sass', 'browserify'], () => {
   var themeSettings = getThemeSettings(theme.options);
 
   let templates = [];
@@ -442,7 +452,7 @@ gulp.task('template-inject', ['less', 'browserify'], () => {
 });
 
 // Replace assets paths in theme.json file and reload options.
-gulp.task('theme-replace', ['browserify', 'less'], () => {
+gulp.task('theme-replace', ['browserify', 'sass'], () => {
   var manifest = require(path.resolve(CWD, "./dist/rev-manifest.json"));
   var base = './',
     cssName = new RegExp(`${theme.name}-.*\.css`, 'g'),
@@ -459,7 +469,7 @@ gulp.task('theme-replace', ['browserify', 'less'], () => {
   loadThemeJSON();
 });
 
-gulp.task('server', ['browserify', 'less', 'index-inject'], () => {
+gulp.task('server', ['browserify', 'sass', 'index-inject'], () => {
   plugins.connect.server({
     port: 8008,
     root: '.',
@@ -471,10 +481,10 @@ gulp.task('server', ['browserify', 'less', 'index-inject'], () => {
 // Watch
 gulp.task('watch-static', ['server'], () => {
   var js = gulp.watch(paths.js, ['browserify', 'index-inject'])
-    , less = gulp.watch(paths.less, ['less', 'index-inject'])
+    , sass = gulp.watch(paths.sass, ['sass', 'index-inject'])
     , templates = gulp.watch(paths.templates, ['index-inject']);
 
-  [js, less, templates].forEach((el, i) => {
+  [js, sass, templates].forEach((el, i) => {
     el.on('error', (e) => {
       console.error(e.toString());
     });
@@ -489,11 +499,11 @@ gulp.task('clean-css', () => del(['dist/*.css']));
 // Clean JS
 gulp.task('clean-js', () => del(['dist/*.js']));
 
-gulp.task('production', ['browserify', 'less', 'theme-replace', 'template-inject']);
+gulp.task('production', ['browserify', 'sass', 'theme-replace', 'template-inject']);
 
 gulp.task('default', ['set-production', 'production']);
 
 // Default build for development
-gulp.task('devel', ['browserify', 'less', 'theme-replace', 'index-inject']);
+gulp.task('devel', ['browserify', 'sass', 'theme-replace', 'index-inject']);
 
 module.exports = gulp;

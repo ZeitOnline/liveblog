@@ -1,0 +1,45 @@
+$share_items_list: facebook twitter email permalink;
+
+.lb-sharing {
+	@include center-content($zon-desktop-content-width);
+	margin-top: 40px;
+
+	&__list {
+		display: flex;
+		justify-content: flex-end;
+		list-style: none;
+		margin: 0;
+		padding: 0;
+
+		@include respond-min($break-tablet-min) {
+			justify-content: flex-start;
+		}
+	}
+
+	&__item {
+		width: em(24px);
+		height: em(24px);
+
+		@include hover {
+			opacity: 0.75;
+		};
+		&:not(:last-child) {
+			margin-right: em(24px);
+		}
+		@each $share_icon in $share_items_list {
+			&--#{$share-icon} {
+				background-image: url('../images/share_#{$share_icon}.svg');
+				background-size: cover;
+				background-repeat: no-repeat;
+			}
+		}
+		a {
+			cursor: pointer;
+			display: inline-block;
+			height: 100%;
+		}
+		> * {
+			width: 100%;
+		}
+	}
+}
