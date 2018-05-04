@@ -1,5 +1,6 @@
 // @TODO remove font-import before deploying to prod
 // @import "base/fonts";
+// @import "base/preview";
 @import "base/functions";
 @import "base/utils";
 @import "base/mixins";
@@ -13,22 +14,6 @@
 @import "components/quote";
 @import "components/button";
 @import "components/slideshow";
-
-.lb-wrapHtml {
-	font-family: $font-tabletgothic;
-	font-size: 1rem;
-	line-height: $base-line-height;
-	margin: 0 auto;
-	max-width: em(1000px);
-
-	* {
-		box-sizing: border-box;
-	}
-}
-
-.lb-wrapBody {
-	margin: 0;
-}
 
 .mod--displaynone,
 .mod--hide {
