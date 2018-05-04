@@ -1,5 +1,5 @@
 <!doctype html>
-<html amp lang="en">
+<html amp lang="{{ settings.language }}">
   <head>
     <meta charset="utf-8">
     <title>{{ blog.title }}</title>
@@ -19,12 +19,53 @@
     <script async custom-element="amp-carousel" src="https://cdn.ampproject.org/v0/amp-carousel-0.1.js"></script>
     <script async custom-element="amp-iframe" src="https://cdn.ampproject.org/v0/amp-iframe-0.1.js"></script>
     <script async custom-element="amp-brightcove" src="https://cdn.ampproject.org/v0/amp-brightcove-0.1.js"></script>
+    <script async custom-element="amp-timeago" src="https://cdn.ampproject.org/v0/amp-timeago-0.1.js"></script>
     <style amp-custom>
     <!-- inject:amp-styles -->
     <!-- endinject -->
     </style>
   </head>
   <body>
-    {% include "template-timeline.html" %}
+    {% include "template-symbols.html" %}
+    <div class="content" id="top">
+      <header class="header">
+        <div class="article__item article__item--wide">
+          <a href="//www.zeit.de">
+            <svg class="header__logo">
+              <use xlink:href="#svg-logo-zon"/>
+            </svg>
+          </a>
+        </div>
+      </header>
+
+      <main>
+        <article class="article">
+          <div class="article__body">
+            <section>
+              <div class="liveblog article__item article__item--large">
+                {% include "template-timeline.html" %}
+              </div>
+            </section>
+          </div>
+        </article>
+      </main>
+
+      <footer class="footer">
+        <a href="//www.zeit.de">
+          <svg class="footer__logo">
+            <use xlink:href="#svg-logo-zon"/>
+          </svg>
+        </a>
+        <nav class="footer__navigation">
+          <ul>
+            <li><a href="//www.zeit.de/impressum/index">Impressum</a></li>
+            <li><a href="//www.zeit.de/hilfe/datenschutz">Datenschutz</a></li>
+          </ul>
+        </nav>
+        <div class="footer__finish">
+          <a class="footer__button" href="#top" title="Zurück nach oben">Nach Oben</a>
+        </div>
+      </footer>
+    </div>
   </body>
 </html>
