@@ -42,11 +42,11 @@
           <span class="lb-post-metadata__status lb-post-metadata__status--highlighted">&#9733;</span>
         {% endif %}
         <span{% if settings.datetimeFormat === 'ago' %} class="relativeDate"{% endif %} data-js-timestamp="{{ postDate }}">
-          {{- postDate | date('LT') -}}
+          {{- postDate | date('HH:mm') -}}
         </span>
       </span>
       <span class="lb-post-metadata__date{% if settings.datetimeFormat === 'ago' %} relativeDate{% endif %}" data-js-timestamp="{{ postDate }}">
-        {{- postDate | date('LL') -}}
+        {{- postDate | date('D. MMMM YYYY') -}}
       </span>
 
     </div>
@@ -156,7 +156,7 @@
     <div class="lb-post-updated">
       <span>{{ translate('Updated') }}</span>
       <span class="lb-post-updated-time{% if settings.datetimeFormat === 'ago' %} relativeDate{% endif %}" data-js-timestamp="{{ item.content_updated_date }}">
-        {{ item.content_updated_date | date('LLL') }}
+        {{ item.content_updated_date | date('D. MMMM YYYY HH:mm') }}
       </span>
     </div>
   {%- endif %}
