@@ -9,6 +9,7 @@ const handlers = require('./handlers'),
   view = require('./view'),
   pageview = require('./pageview'),
   localAnalytics = require('./local-analytics'),
+  settings = window.LB.settings,
   adsManager = require('./ads-manager');
 
 require("iframe-resizer/js/iframeResizer.contentWindow.min.js");
@@ -26,8 +27,10 @@ module.exports = {
     adsManager.init();
 
     view.updateTimestamps();
-    setInterval(() => {
-      view.updateTimestamps(); // Convert ISO dates to timeago
-    }, 1000);
+    if (!settings.datetimeFormat || settings.datetimeFormat === 'ago') {
+      setInterval(() => {
+        view.updateTimestamps(); // Convert ISO dates to timeago
+      }, 1000);
+    }
   }
 };
