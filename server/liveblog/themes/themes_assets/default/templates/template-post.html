@@ -41,10 +41,10 @@
         {% if item.lb_highlight %}
           <span class="lb-post-metadata__status lb-post-metadata__status--highlighted">&#9733;</span>
         {% endif %}
-        {{- postDate | date('HH:mm') -}}
+        {{ postDate | date('HH:mm') }}
       </span>
       <span class="lb-post-metadata__date{% if settings.datetimeFormat === 'ago' %} relativeDate{% endif %}" data-js-timestamp="{{ postDate }}">
-        {{- postDate | date(settings.datetimeFormat) -}}
+        {{ postDate | date(settings.datetimeFormat) }}
       </span>
 
     </div>
