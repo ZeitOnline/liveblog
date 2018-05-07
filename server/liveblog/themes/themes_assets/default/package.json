@@ -1,6 +1,6 @@
 {
   "name": "liveblog-zon-default-solo-theme",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "ZEIT ONLINE Default Theme - Solo",
   "author": "ZEIT ONLINE <kontakt@zeit.de>",
   "license": "AGPL-3.0",
@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "amphtml-validator": "^1.0.23",
+    "babel-core": "^6.26.3",
     "babel-preset-es2015": "^6.24.1",
     "babel-preset-stage-0": "^6.24.1",
     "babelify": "^8.0.0",
@@ -54,8 +55,5 @@
   "repository": {
     "type": "git",
     "url": "git@github.com:ZeitOnline/liveblog-default-theme"
-  },
-  "devDependencies": {
-    "babel-core": "^6.26.3"
   }
 }
