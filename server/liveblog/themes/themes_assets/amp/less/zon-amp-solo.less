@@ -1,0 +1,31 @@
+// ZEIT ONLINE AMP Theme - Solo
+
+@import "globals.less";
+@import "zon-amp.less";
+
+.lb-no-author-theme {
+  .lb-post:not(.lb-post--sticky) {
+    padding-left: 20px;
+
+    &::before {
+      content: none;
+    }
+  }
+
+  @media @tablet {
+    .lb-post {
+      padding-top: 40px;
+    }
+    .lb-post:not(.lb-post--sticky) {
+      padding-left: 30px;
+    }
+  }
+
+}
+
+.lb-post-timeago {
+  color: @darkgrey;
+  display: inline;
+  font-size: 14px;
+  letter-spacing: 0.03em;
+}
