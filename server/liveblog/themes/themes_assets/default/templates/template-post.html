@@ -43,7 +43,7 @@
         {% endif %}
         {{ postDate | date('HH:mm') }}
       </span>
-      <span class="lb-post-metadata__date{% if settings.datetimeFormat === 'ago' %} relativeDate{% endif %}" data-js-timestamp="{{ postDate }}">
+      <span class="lb-post-metadata__date{% if settings.datetimeFormat == 'ago' %} relativeDate{% endif %}" data-js-timestamp="{{ postDate }}">
         {{ postDate | date(settings.datetimeFormat) }}
       </span>
 
