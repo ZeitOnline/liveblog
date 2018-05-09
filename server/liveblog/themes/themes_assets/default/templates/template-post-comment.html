@@ -39,7 +39,7 @@
               {% endif %}
               <div class="lb-item {% if ref.item.meta.media.renditions.original.height > ref.item.meta.media.renditions.original.width %}portrait{% endif %}{{ref.item.item_type}}">
               {% else %}
-              <div class="lb-item {{ref.item.item_type}}">
+              <div class="lb-item lb-item--{{ref.item.item_type}}">
               {% endif %}
               {% if ref.item.item_type == "embed" %}
                 {% include "template-item-embed.html" %}

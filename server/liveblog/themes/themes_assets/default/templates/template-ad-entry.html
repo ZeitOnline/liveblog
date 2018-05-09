@@ -1,8 +1,6 @@
 {% macro translate(text) %}{% if not options.i18n[settings.language] %}{{ text }}{% elif not options.i18n[settings.language][text] %}{{ text }}{% else %}{{ options.i18n[settings.language][text] }}{% endif %}{% endmacro %}
 
-<article
-    class="lb-post list-group-item show-author-avatar advertisement"
-    data-post-id="{{ item._id }}">
+<article class="lb-post advertisement" data-post-id="{{ item._id }}">
     <div class="lb-post-header">
         <div class="lb-type lb-type--{{ item.type }}"></div>
 
@@ -14,7 +12,7 @@
   <!-- post start -->
   <div class="items-container">
     <!-- item start -->
-    <div class="lb-item {{ item.type }}">
+    <div class="lb-item lb-item--{{ item.type }}">
         <article>{{ item.text | safe }}</article>
     </div>
     <!-- item end -->
