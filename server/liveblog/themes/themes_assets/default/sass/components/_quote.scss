@@ -3,20 +3,21 @@
 
     p {
         font-family: $font-franziska;
-        font-style: italic;
         font-size: em(22px);
+        font-style: italic;
         margin: 0 0 1em;
 
         &:before {
-          content: "\201E ";
+            content: "\201E ";
         }
 
         &:after {
-          content: " \201C";
+            content: " \201C";
         }
     }
 
     cite {
+        font-family: $font-tabletgothic;
         font-size: em(16px);
         font-style: normal;
         font-weight: bold;
