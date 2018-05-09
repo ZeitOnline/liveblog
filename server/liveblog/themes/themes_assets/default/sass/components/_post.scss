@@ -6,7 +6,19 @@ $author-avatar-width: em(42px);
 }
 
 .lb-item {
-	margin-bottom: em(24px);
+	font-family: $font-franziska;
+	font-size: em(18px);
+	line-height: 1.4;
+	margin-bottom: 20px;
+
+	@include respond-min($break-tablet-min) {
+		line-height: 1.5;
+	}
+
+	@include respond-min($break-desktop-min) {
+		font-size: em(20px);
+	}
+
 	// @ TODO override embed's inlined link-color
 	@include default-article-textlink();
 
@@ -17,16 +29,6 @@ $author-avatar-width: em(42px);
 	.item--embed__illustration,
 	.item--embed__only-illustration {
 		border-bottom: 0;
-	}
-
-	&--text {
-		font-family: $font-franziska;
-		font-size: em(18px);
-		line-height: 1.4;
-		margin-bottom: 20px;
-		@include respond-min($break-tablet-min) {
-			font-size: em(20px);
-		}
 	}
 }
 
