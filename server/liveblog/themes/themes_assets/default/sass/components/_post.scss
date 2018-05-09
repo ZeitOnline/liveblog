@@ -18,6 +18,16 @@ $author-avatar-width: em(42px);
 	.item--embed__only-illustration {
 		border-bottom: 0;
 	}
+
+	&--text {
+		font-family: $font-franziska;
+		font-size: em(18px);
+		line-height: 1.4;
+		margin-bottom: 20px;
+		@include respond-min($break-tablet-min) {
+			font-size: em(20px);
+		}
+	}
 }
 
 .lb-post {
@@ -30,15 +40,6 @@ $author-avatar-width: em(42px);
 		padding: em(54px 20px 30px);
 	}
 
-	.text {
-		font-family: $font-franziska;
-		font-size: em(18px);
-		line-height: 1.4;
-		margin-bottom: 20px;
-		@include respond-min($break-tablet-min) {
-			font-size: em(20px);
-		}
-	}
 	&:not(:last-child):not(.empty-message) {
 		.lb-items-container{
 			&:before {

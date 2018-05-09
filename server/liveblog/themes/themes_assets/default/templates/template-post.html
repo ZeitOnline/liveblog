@@ -17,12 +17,12 @@
 <!-- sticky position toggle -->
 {% if item.sticky and settings.stickyPosition == 'top' %}
 <article
-  class="lb-sticky-top-post list-group-item {{ type }} {% if displaynone %}mod--displaynone{% endif %}"
+  class="lb-sticky-top-post{% if displaynone %} mod--displaynone{% endif %}"
   data-post-id="{{ item._id }}"
   data-post-sticky="{{ item.sticky }}">
   {% else %}
 <article
-  class="lb-post list-group-item show-author-avatar {{ type }} {% if item.lb_highlight %}lb-post--highlighted{% endif %} {% if displaynone %}mod--displaynone{% endif %}"
+  class="lb-post{% if item.lb_highlight %} lb-post--highlighted{% endif %}{% if displaynone %} mod--displaynone{% endif %}"
   data-post-id="{{ item._id }}"
   data-post-sticky="{{ item.sticky }}">
   <div class="lb-post-header">
@@ -114,10 +114,10 @@
               {% set galleryItem = true %}
             {% endif %}
             <!-- image item start -->
-            <div class="lb-item {% if ref.item.meta.media.renditions.original.height > ref.item.meta.media.renditions.original.width %}portrait{% endif %}{{ref.item.item_type}}">
+            <div class="lb-item lb-item--{% if ref.item.meta.media.renditions.original.height > ref.item.meta.media.renditions.original.width %}portrait{% endif %}{{ref.item.item_type}}">
           {% else %}
             <!-- item start -->
-            <div class="lb-item {{ref.item.item_type}}">
+            <div class="lb-item lb-item--{{ref.item.item_type}}">
           {% endif %}
           {% if ref.item.item_type == "embed" %}
             {% include "template-item-embed.html" %}
