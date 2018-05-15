@@ -1,4 +1,5 @@
-<amp-timeago class="lb-post-timeago
-  {%- if item.lb_highlight %} lb-post-time--highlight{% endif %}" datetime="{{ postDate }}" locale="{{ settings.language }}">
+<amp-timeago width="160" height="20" layout="fixed" class="lb-post-timeago
+  {%- if item.lb_highlight %} lb-post-time--highlight{% endif %}" datetime="
+  {{- postDate | date('YYYY-MM-DDTHH:mm:ssZZ') }}" locale="{{ settings.language }}">
   {{- postDate | date('ago') -}}
 </amp-timeago>
