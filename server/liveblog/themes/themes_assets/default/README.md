@@ -3,7 +3,7 @@
 - fork von [Liveblog Default Theme](https://github.com/liveblog/liveblog-default-theme)
 - Aktualisierungen von Sourcefabric sollten regelmäßig von deren Repo in den `master` gemerged werden.
 ```
-git remote add liveblog git@github.com:liveblog/liveblog-default-theme.git
+git remote add liveblog git@github.com:liveblog/liveblog.git
 ```
 
 ### Development
