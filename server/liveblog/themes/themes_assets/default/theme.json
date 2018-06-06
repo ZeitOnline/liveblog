@@ -5,7 +5,10 @@
     "asyncTheme": true,
     "seoTheme": true,
     "author": "ZEIT ONLINE <kontakt@zeit.de>",
-    "contributors": ["Tobias Weiß <tobias.weiss@zeit.de>"],
+    "contributors": [
+      "Moritz Stoltenburg <moritz.stoltenburg@zeit.de>",
+      "Tobias Weiß <tobias.weiss@zeit.de>"
+    ],
     "repository": {
         "type" : "git",
         "url" : "git@github.com:ZeitOnline/liveblog-default-theme.git"
