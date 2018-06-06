@@ -1,20 +1,23 @@
 {
     "label": "ZEIT ONLINE Default Theme",
     "name": "zon-default",
-    "version": "0.0.5",
+    "version": "1.0.0",
     "asyncTheme": true,
     "seoTheme": true,
     "author": "ZEIT ONLINE <kontakt@zeit.de>",
-    "contributors": ["Tobias Weiß <tobias.weiss@zeit.de>"],
+    "contributors": [
+      "Moritz Stoltenburg <moritz.stoltenburg@zeit.de>",
+      "Tobias Weiß <tobias.weiss@zeit.de>"
+    ],
     "repository": {
         "type" : "git",
         "url" : "git@github.com:ZeitOnline/liveblog-default-theme.git"
     },
     "license": "AGPL-3.0",
     "devStyles": ["dist/zon-default-9e9651b4af.css"],
-    "devScripts": ["dist/zon-default-06e2ea3996.js"],
+    "devScripts": ["dist/zon-default-b35ef0a2b0.js"],
     "styles": ["dist/zon-default-9e9651b4af.css"],
-    "scripts": ["dist/zon-default-06e2ea3996.js"],
+    "scripts": ["dist/zon-default-b35ef0a2b0.js"],
     "options": [
         {
             "name": "datetimeFormat",
