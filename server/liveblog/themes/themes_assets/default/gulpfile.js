@@ -2,20 +2,20 @@
 
 const gulp = require('gulp');
 const browserify = require('browserify');
-const nunjucksify = require('nunjucksify');
 const source = require('vinyl-source-stream');
 const buffer = require('vinyl-buffer');
 const plugins = require('gulp-load-plugins')();
+const through = require('through2');
 const del = require('del');
 const fs = require('fs');
 const path = require('path');
 const nunjucks = require('nunjucks');
 const dateFilter = require('nunjucks-date-filter');
 const amphtmlValidator = require('amphtml-validator');
-const sourcemaps = require('gulp-sourcemaps');
+const {ThemeTemplatesLoader} = require('liveblog-shared-tools');
 
 const CWD = process.cwd();
-var DEBUG = process.env.NODE_ENV !== "production";
+var DEBUG = plugins.util.env.NODE_ENV ? plugins.util.env.NODE_ENV : process.env.NODE_ENV !== "production";
 
 // Command-line and default theme options from theme.json.
 let theme = {};
@@ -109,16 +109,9 @@ if (match.length > 0) {
   });
 }
 
-let templatePath = [
-  path.resolve(`${CWD}/templates`)
-];
 
-if (theme.extends) {
-  templatePath.push(path.resolve(`${CWD}/node_modules/liveblog-${theme.extends}-theme/templates`));
-}
-
-const nunjucksLoader = new nunjucks.FileSystemLoader(templatePath);
-const nunjucksEnv = new nunjucks.Environment(nunjucksLoader);
+const themeTemplatersLoader = new ThemeTemplatesLoader(theme);
+const nunjucksEnv = new nunjucks.Environment(themeTemplatersLoader);
 
 // Add nunjucks-date-filter and set default date format.
 // TODO: get date format from theme settings.
@@ -244,13 +237,42 @@ gulp.task('lint', () =>
   .pipe(plugins.eslint.failAfterError())
 );
 
+var templatesSufix = 'precomp-templates.js';
+
+gulp.task('precomp-parent-templates', () => {
+  // only if is a theme extension
+  if (!theme.extends) return;
+
+  var prefixOptions = {
+    env: nunjucksEnv,
+    name: function(file) {
+        var filename = path.basename(file.path);
+        return `${theme.extends}/${filename}`;
+    }
+  };
+
+  return gulp.src(paths.templates)
+    .pipe(plugins.nunjucks.precompile(prefixOptions))
+    .pipe(plugins.concat(`${theme.extends}-${templatesSufix}`))
+		.pipe(gulp.dest('./dist/prebundle'));
+});
+
+gulp.task('precomp-theme-templates', () =>
+	gulp.src([paths.templates, path.resolve(CWD, 'templates/*.html')])
+    .pipe(plugins.nunjucks.precompile(nunjucksOptions))
+    .pipe(plugins.concat(`${theme.name}-${templatesSufix}`))
+		.pipe(gulp.dest('./dist/prebundle'))
+);
+
 // Browserify.
 let browserifyPreviousTasks = ['clean-js'];
 
 gulp.task('browserify', browserifyPreviousTasks, (cb) => {
+
   if (theme.ampTheme) {
     return gulp.src('.').pipe(plugins.util.noop());
   }
+
   var b = browserify({
     basedir: inputPath,
     entries: 'js/liveblog.js',
@@ -258,31 +280,38 @@ gulp.task('browserify', browserifyPreviousTasks, (cb) => {
     debug: DEBUG
   });
 
-  var rewriteFilenames = function(filename) {
-    var parts = filename.split('/');
-
-    return parts[parts.length - 1];
-    // return filename;
-  };
-
-  // Source-mapped
   return b
-    .transform('babelify', {presets: ['es2015', 'stage-0']})
-    .transform(nunjucksify, {
-      extension: '.html',
-      nameFunction: rewriteFilenames
-    })
+    .transform('babelify', { presets: ['es2015', 'stage-0'] })
     .bundle()
     .on('error', plugins.util.log)
     .pipe(source(paths.jsfile))
     .pipe(buffer())
     .pipe(plugins.concat(`${theme.name}.js`))
-    .pipe(plugins.rev())
     .pipe(plugins.ngAnnotate())
+    .pipe(gulp.dest('./dist/prebundle'));
+});
+
+gulp.task('bundle-templates', ['precomp-parent-templates', 'precomp-theme-templates']);
+
+gulp.task('bundlejs', ['bundle-templates', 'browserify'], () =>  {
+  var bundlePaths = [
+    `./dist/prebundle/*-${templatesSufix}`,  // templates must go first
+    `./dist/prebundle/${theme.name}.js`
+  ];
+
+  return gulp.src(bundlePaths)
+    .pipe(plugins.concat(`${theme.name}.js`))
+    .pipe(plugins.rev())
     .pipe(plugins.if(!DEBUG, plugins.uglify()))
     .pipe(gulp.dest('./dist'))
     .pipe(plugins.rev.manifest('dist/rev-manifest.json', {merge: true}))
-    .pipe(gulp.dest('.'));
+    .pipe(gulp.dest('.'))
+
+    // delete prebundle dir
+    .pipe(through.obj(function(file, enc, cb) {
+      del(['./dist/prebundle/']);
+      cb();
+    }));
 });
 
 const sassCommon = () => {
@@ -301,7 +330,6 @@ const sassCommon = () => {
   sassFiles.push(fs.existsSync(themeSass) ? themeSass : './sass/*.scss');
 
   return gulp.src(sassFiles)
-    .pipe(plugins.if(DEBUG, sourcemaps.init()))
     .pipe(plugins.sass({
       sourcemap: DEBUG,
       sourcemapPath: './sass'
@@ -344,8 +372,7 @@ const sassCommon = () => {
     .pipe(plugins.if(!DEBUG, plugins.cleanCss({
       rebase: false,
       compatibility: 'ie8'
-    })))
-    .pipe(plugins.if(DEBUG, sourcemaps.write()));
+    })));
 };
 
 // Compile SASS files.
@@ -360,7 +387,7 @@ gulp.task('sass', ['clean-css'], () =>
 
 
 // Inject API response into template for dev/test purposes.
-gulp.task('index-inject', ['sass', 'browserify'], () => {
+gulp.task('index-inject', ['sass', 'bundlejs'], () => {
   var testdata = require(path.resolve(`${CWD}/test`));
   var sources = gulp.src(['./dist/*.js', './dist/*.css'], {
     read: false // We're only after the file paths
@@ -421,7 +448,7 @@ gulp.task('amp-validate', [], () => {
 
 
 // Inject jinja/nunjucks template for production use.
-gulp.task('template-inject', ['sass', 'browserify'], () => {
+gulp.task('template-inject', ['sass', 'bundlejs'], () => {
   var themeSettings = getThemeSettings(theme.options);
 
   let templates = [];
@@ -452,7 +479,7 @@ gulp.task('template-inject', ['sass', 'browserify'], () => {
 });
 
 // Replace assets paths in theme.json file and reload options.
-gulp.task('theme-replace', ['browserify', 'sass'], () => {
+gulp.task('theme-replace', ['bundlejs', 'sass'], () => {
   var manifest = require(path.resolve(CWD, "./dist/rev-manifest.json"));
   var base = './',
     cssName = new RegExp(`${theme.name}-.*\.css`, 'g'),
@@ -469,7 +496,7 @@ gulp.task('theme-replace', ['browserify', 'sass'], () => {
   loadThemeJSON();
 });
 
-gulp.task('server', ['browserify', 'sass', 'index-inject'], () => {
+gulp.task('server', ['install', 'bundlejs', 'sass', 'index-inject'], () => {
   plugins.connect.server({
     port: 8008,
     root: '.',
@@ -480,7 +507,7 @@ gulp.task('server', ['browserify', 'sass', 'index-inject'], () => {
 
 // Watch
 gulp.task('watch-static', ['server'], () => {
-  var js = gulp.watch(paths.js, ['browserify', 'index-inject'])
+  var js = gulp.watch(paths.js, ['bundlejs', 'index-inject'])
     , sass = gulp.watch(paths.sass, ['sass', 'index-inject'])
     , templates = gulp.watch(paths.templates, ['index-inject']);
 
@@ -491,6 +518,10 @@ gulp.task('watch-static', ['server'], () => {
   });
 });
 
+gulp.task('install', [], () => {
+  gulp.src([path.resolve(`${CWD}/package.json`)]).pipe(plugins.install());
+});
+
 gulp.task('set-production', () => {DEBUG = false;});
 
 // Clean CSS
@@ -499,11 +530,11 @@ gulp.task('clean-css', () => del(['dist/*.css']));
 // Clean JS
 gulp.task('clean-js', () => del(['dist/*.js']));
 
-gulp.task('production', ['browserify', 'sass', 'theme-replace', 'template-inject']);
+gulp.task('production', ['install', 'bundlejs', 'sass', 'theme-replace', 'template-inject']);
 
 gulp.task('default', ['set-production', 'production']);
 
 // Default build for development
-gulp.task('devel', ['browserify', 'sass', 'theme-replace', 'index-inject']);
+gulp.task('devel', ['install', 'bundlejs', 'sass', 'theme-replace', 'index-inject']);
 
 module.exports = gulp;
