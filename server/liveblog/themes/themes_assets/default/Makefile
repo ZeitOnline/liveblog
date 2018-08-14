@@ -5,6 +5,8 @@ make:
 	make clean
 	node_modules/.bin/gulp --NODE_ENV production
 	zip -r $(THEME_ARCHIVE) * \
+		-x ".DS_Store" \
+		-x "*/.DS_Store" \
 		-x ".git/*" \
 		-x "Makefile" \
 		-x "less/*" \
