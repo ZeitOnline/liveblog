@@ -1,6 +1,6 @@
 {
   "name": "liveblog-zon-default-solo-theme",
-  "version": "1.0.0",
+  "version": "3.3.93",
   "description": "ZEIT ONLINE Default Theme - Solo",
   "author": "ZEIT ONLINE <kontakt@zeit.de>",
   "license": "AGPL-3.0",
@@ -46,7 +46,6 @@
     "moment": "^2.22.1",
     "nunjucks": "3.1.2",
     "nunjucks-date-filter": "^0.1.1",
-    "nunjucksify": "^2.2.0",
     "promise-polyfill": "^7.1.2",
     "through2": "^2.0.3",
     "vinyl-buffer": "^1.0.1",

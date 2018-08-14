@@ -9,14 +9,22 @@ var moment = require('moment'),
 
 require("moment/min/locales.min");
 moment.locale(settings.language);
+function convertTimestamp(timestamp) {
+  if (settings.showRelativeDate) {
+    const d = new Date(); // Now
+    const date = moment(timestamp);
 
-function convertTimestamp(timestamp, format) {
-  var datetimeFormat = format || settings.datetimeFormat;
+    d.setHours(d.getHours() - 8); // Minus 8h
 
-  if (!datetimeFormat || datetimeFormat === 'ago') {
+    if (!moment(date).isBefore(d)) {
+      return date.fromNow();
+    }
+  }
+
+  if (!settings.datetimeFormat || settings.datetimeFormat === 'ago') {
     return moment(timestamp).fromNow();
   }
-  return moment(timestamp).format(datetimeFormat);
+  return moment(timestamp).format(settings.datetimeFormat);
 }
 
 /**
