@@ -98,3 +98,4 @@ server/themes/
 
 # Monorepo
 node_modules
+.DS_Store
