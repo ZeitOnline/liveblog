@@ -105,7 +105,7 @@
             "name": "hasHighlights",
             "label": "Show highlight button",
             "type": "checkbox",
-            "default": false,
+            "default": true,
             "help": "Introduces a button for the readers to filter the timeline by highlights"
         },
         {
@@ -241,7 +241,7 @@
             "name": "showGallery",
             "label": "Show slideshow gallery",
             "type": "checkbox",
-            "default": false,
+            "default": true,
             "help": "Multiple image posts will show up as an image gallery"
         },
         {
