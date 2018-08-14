@@ -15,8 +15,8 @@
     "url" : "git@github.com:ZeitOnline/liveblog-amp-theme"
   },
   "license": "AGPL-3.0",
-  "devStyles": ["dist/zon-amp-89052d9552.css"],
-  "styles": ["dist/zon-amp-89052d9552.css"],
+  "devStyles": ["dist/zon-amp-1c52df805f.css"],
+  "styles": ["dist/zon-amp-1c52df805f.css"],
   "supportAdsInjection": false,
   "options": [
     {
