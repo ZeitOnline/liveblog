@@ -39,7 +39,7 @@
     <div class="header-bar__interaction">
       <div class="header-bar__align-wrapper"> <!-- align menu items w/ post's content -->
         <span class="sorting-bar__order
-          {%- if settings.postOrder == 'newest_first' %} sorting-bar__order--active{% endif %}" data-js-orderby_descending>
+          {%- if settings.postOrder == 'newest_first' or settings.postOrder == 'editorial' %} sorting-bar__order--active{% endif %}" data-js-orderby_editorial>
           {{  translate("Newest first") }}
         </span>
         <span class="sorting-bar__order
