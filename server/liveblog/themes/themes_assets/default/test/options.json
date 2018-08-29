@@ -22,7 +22,7 @@
       "canComment":false,
       "language":"en",
       "postsPerPage":20,
-      "postOrder":"newest_first",
+      "postOrder":"editorial",
       "showAuthorAvatar":true,
       "showTitle":true,
       "authorNameFormat":"display_name",
