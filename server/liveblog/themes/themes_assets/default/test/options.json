@@ -174,7 +174,7 @@
     "loadNewPostsManually":true,
     "showGallery":true,
     "postsPerPage":10,
-    "postOrder":"newest_first",
+    "postOrder":"editorial",
     "showDescription":true,
     "permalinkDelimiter":"?",
     "showImage":false,
