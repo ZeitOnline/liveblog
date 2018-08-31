@@ -326,7 +326,7 @@
             "name": "renderForESI",
             "label": "Optimise the Live Blog output for ESI",
             "type": "checkbox",
-            "default": true,
+            "default": false,
             "help": "Strips the head and body tags from the Live Blog output to publish it using Edge Side Includes",
             "isAdvanced": true
         },
