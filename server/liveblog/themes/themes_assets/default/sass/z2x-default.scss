@@ -1,10 +1,10 @@
 // @TODO remove font-import before deploying to prod
-// @import "base/fonts";
-// @import "base/preview";
 @import "base/functions";
 @import "base/utils";
 @import "base/mixins";
 @import "base/constants";
+@import "base/fonts";
+@import "base/preview";
 @import "components/header-bar";
 @import "components/post";
 @import "components/post-metadata";
