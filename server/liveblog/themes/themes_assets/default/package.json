@@ -1,7 +1,7 @@
 {
-  "name": "liveblog-zon-default-theme",
+  "name": "liveblog-z2x-default-theme",
   "version": "3.3.94",
-  "description": "ZEIT ONLINE Default Theme",
+  "description": "Z2X Default Theme",
   "author": "ZEIT ONLINE <kontakt@zeit.de>",
   "license": "AGPL-3.0",
   "main": "js/liveblog.js",
