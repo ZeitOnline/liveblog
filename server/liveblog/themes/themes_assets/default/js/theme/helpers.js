@@ -9,7 +9,9 @@ var moment = require('moment'),
 
 require("moment/min/locales.min");
 moment.locale(settings.language);
-function convertTimestamp(timestamp) {
+function convertTimestamp(timestamp, format) {
+  var datetimeFormat = format || settings.datetimeFormat;
+
   if (settings.showRelativeDate) {
     const d = new Date(); // Now
     const date = moment(timestamp);
@@ -21,10 +23,10 @@ function convertTimestamp(timestamp) {
     }
   }
 
-  if (!settings.datetimeFormat || settings.datetimeFormat === 'ago') {
+  if (!datetimeFormat || datetimeFormat === 'ago') {
     return moment(timestamp).fromNow();
   }
-  return moment(timestamp).format(settings.datetimeFormat);
+  return moment(timestamp).format(datetimeFormat);
 }
 
 /**
