@@ -1,7 +1,7 @@
 {
     "label": "Z2X Default Theme",
     "name": "z2x-default",
-    "version": "3.3.98",
+    "version": "3.3.99",
     "asyncTheme": true,
     "seoTheme": true,
     "author": "ZEIT ONLINE <kontakt@zeit.de>",
@@ -15,9 +15,9 @@
     },
     "license": "AGPL-3.0",
     "devStyles": ["dist/z2x-default-33beba5f3f.css"],
-    "devScripts": ["dist/z2x-default-45637b7457.js"],
+    "devScripts": ["dist/z2x-default-ec8e72612b.js"],
     "styles": ["dist/z2x-default-33beba5f3f.css"],
-    "scripts": ["dist/z2x-default-45637b7457.js"],
+    "scripts": ["dist/z2x-default-ec8e72612b.js"],
     "options": [
         {
             "name": "language",
