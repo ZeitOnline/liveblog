@@ -48,20 +48,20 @@
 }
 
 body {
-  background-color: #fff;
-  color: #313131;
+  background-color: @white;
+  color: @dark;
   font-family: "TabletGothic", "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
   font-size: 16px;
   line-height: 1.5;
 }
 
 a {
-  color: #313131;
+  color: @dark;
   text-decoration: none;
 }
 
 a:hover, a:active, a:focus {
-  color: #b91109;
+  color: @red;
 }
 
 figure {
@@ -84,7 +84,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .advertising:before, .nextad__label {
-  color: #999;
+  color: @midgrey;
   display: block;
   font-family: "TabletGothic", "Helvetica Neue", Helvetica, Arial, FreeSans, sans-serif;
   font-size: 0.5625em;
@@ -123,8 +123,8 @@ svg use {
   display: inline-block;
   background-color: rgba(235, 235, 235, 0.5);
   border-radius: 5px;
-  border: 2px solid #CCC;
-  color: #313131;
+  border: 2px solid @lightgrey;
+  color: @dark;
   font-size: 0.8125rem;
   font-weight: bold;
   letter-spacing: 0.08em;
@@ -139,13 +139,13 @@ svg use {
 }
 
 .button:visited {
-  color: #313131;
+  color: @dark;
 }
 
 .button:hover, .button:focus {
   background-color: rgba(235, 235, 235, 0.2);
-  border-color: #999;
-  color: #000;
+  border-color: @midgrey;
+  color: @black;
   cursor: pointer;
 }
 
@@ -155,8 +155,8 @@ svg use {
 
 .button[disabled]:hover, .button[disabled]:focus {
   background-color: rgba(235, 235, 235, 0.5);
-  border-color: #CCC;
-  color: #313131;
+  border-color: @lightgrey;
+  color: @dark;
   cursor: default;
 }
 
@@ -207,7 +207,7 @@ svg use {
 }
 
 .footer__logo {
-  color: #1d1d1b;
+  color: @logoblack;
   display: block;
   height: 1.625rem;
   margin: 1.25rem auto;
@@ -217,8 +217,8 @@ svg use {
 .footer__navigation {
   padding-left: 0.875rem;
   padding-right: 0.875rem;
-  background-color: #eee;
-  color: #444;
+  background-color: @lightergrey;
+  color: @darkgrey;
   font-size: 0.875em;
   font-weight: bold;
   padding-bottom: 1.25rem;
@@ -256,11 +256,11 @@ svg use {
 }
 
 .footer__navigation a:hover, .footer__navigation a:active, .footer__navigation a:focus {
-  color: #000;
+  color: @black;
 }
 
 .footer__finish {
-  background-color: #313131;
+  background-color: @dark;
   padding: 1.125rem 0;
 }
 
@@ -268,8 +268,8 @@ svg use {
   display: inline-block;
   background-color: rgba(0, 0, 0, 0.2);
   border-radius: 5px;
-  border: 2px solid #999;
-  color: #eee;
+  border: 2px solid @midgrey;
+  color: @lightergrey;
   font-size: 0.8125rem;
   font-weight: bold;
   letter-spacing: 0.08em;
@@ -287,13 +287,13 @@ svg use {
 }
 
 .footer__button:visited {
-  color: #eee;
+  color: @lightergrey;
 }
 
 .footer__button:hover, .footer__button:focus {
   background-color: rgba(0, 0, 0, 0.5);
-  border-color: #ddd;
-  color: #fff;
+  border-color: @iron;
+  color: @white;
   cursor: pointer;
 }
 
@@ -302,7 +302,7 @@ svg use {
   padding-right: 0.875rem;
   padding-bottom: 0.8125rem;
   padding-top: 0.875rem;
-  border-bottom: 1px solid #dddddd;
+  border-bottom: 1px solid @iron;
 }
 
 @media screen and (min-width: 48em) {
@@ -313,7 +313,7 @@ svg use {
 }
 
 .header__logo {
-  color: #1D1D1B;
+  color: @logoblack;
   display: block;
   height: 1.625rem;
   width: 14.4375rem;
