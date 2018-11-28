@@ -10,9 +10,9 @@
   max-width: 660px;
   padding: 20px 20px 28px 40px;
   position: relative;
-  
+
   &::before {
-    background-color: #ccc;
+    background-color: @lightgrey;
     content: '';
     height: 100%;
     left: 20px;
@@ -30,7 +30,7 @@
 }
 
 .lb-post--sticky {
-  background-color: #fff;
+  background-color: @white;
   border-color: @lightergrey;
   border-style: solid;
   border-width: 20px 10px;
@@ -46,7 +46,7 @@
   .lb-post {
     margin-top: 20px;
     padding: 60px 30px 40px;
-    
+
     &::before {
       left: 10px;
       top: 80px;
@@ -109,11 +109,11 @@
   white-space: nowrap;
 }
 .lb-post-time--default {
-  background-color: @darkgrey;
+  background-color: @trout;
   border-radius: 4px;
   box-shadow: 0 0 0 10px @lightergrey;
   box-sizing: border-box;
-  color: #fff;
+  color: @white;
   display: inline-block;
   margin: 0 10px 0 -31px;
   min-width: 109px;
@@ -133,7 +133,7 @@
   margin-right: 8px;
 }
 .lb-post-date {
-  color: @darkgrey;
+  color: @trout;
 }
 
 @media @tablet {
@@ -244,26 +244,26 @@
 
 // Update button
 
-.lb-update-button { 
-  background-color: #fff;
-  border-radius: 5px; 
-  border: 2px solid #ccc; 
-  color: #313131; 
-  display: block; 
+.lb-update-button {
+  background-color: @white;
+  border-radius: 5px;
+  border: 2px solid @lightgrey;
+  color: @dark;
+  display: block;
   font-family: inherit;
-  font-size: 13px; 
-  font-weight: bold; 
-  letter-spacing: .05em; 
-  margin: 20px auto; 
-  padding: 10px 18px; 
-  text-align: center; 
-  text-transform: uppercase; 
-  transition: all .15s ease-in-out; 
+  font-size: 13px;
+  font-weight: bold;
+  letter-spacing: .05em;
+  margin: 20px auto;
+  padding: 10px 18px;
+  text-align: center;
+  text-transform: uppercase;
+  transition: all .15s ease-in-out;
 
   &:hover,
   &:focus {
-    border-color: #999; 
-    color: #000;
+    border-color: @midgrey;
+    color: @black;
   }
 }
 
@@ -303,7 +303,7 @@
     font-size: .75em;
     line-height: 1.3em;
     margin-top: .5em;
-    color: #666;
+    color: @grey;
 
     b {
       font-weight: normal;
@@ -330,7 +330,7 @@
   }
   .item--embed__description,
   .item--embed__credit {
-    font-size: .75em;   
+    font-size: .75em;
     margin-top: 8px;
   }
   .item--embed__credit {
