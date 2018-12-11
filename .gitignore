@@ -98,4 +98,8 @@ server/themes/
 
 # Monorepo
 node_modules
-.DS_Store
+
+package-lock.json
+.vscode/
+.python-version
+setup.cfg

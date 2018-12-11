@@ -1,23 +1,26 @@
 {
-    "label": "ZEIT ONLINE Default Theme",
-    "name": "zon-default",
-    "version": "3.3.95",
+    "label": "Liveblog 3 Default SEO Theme",
+    "name": "default",
+    "version": "4.0.0-beta.5",
     "asyncTheme": true,
     "seoTheme": true,
-    "author": "ZEIT ONLINE <kontakt@zeit.de>",
+    "author": "Sourcefabric <contact@sourcefabric.org>",
     "contributors": [
-      "Moritz Stoltenburg <moritz.stoltenburg@zeit.de>",
-      "Tobias Weiß <tobias.weiss@zeit.de>"
+        "Paul Solbach <psolbach@dpa-newslab.com>",
+        "Massimo Scamarcia <massimo.scamarcia@sourcefabric.org>",
+        "Löic Nogues <loic.nogues@sourcefabric.org>",
+        "Aleksandar Backo Jelicic <aleksandar.jelicic@sourcefabric.org>",
+        "Helmy Giacoman <helmy.giacoman@sourcefabric.org>"
     ],
     "repository": {
         "type" : "git",
-        "url" : "git@github.com:ZeitOnline/liveblog-default-theme.git"
+        "url" : "git@github.com:liveblog/liveblog-default-theme"
     },
     "license": "AGPL-3.0",
-    "devStyles": ["dist/zon-default-9e9651b4af.css"],
-    "devScripts": ["dist/zon-default-ec8e72612b.js"],
-    "styles": ["dist/zon-default-9e9651b4af.css"],
-    "scripts": ["dist/zon-default-ec8e72612b.js"],
+    "devStyles": ["dist/default-2afdbfcb68.css"],
+    "devScripts": ["dist/default-32a04b122b.js"],
+    "styles": ["dist/default-2afdbfcb68.css"],
+    "scripts": ["dist/default-32a04b122b.js"],
     "options": [
         {
             "name": "language",
@@ -69,7 +72,7 @@
                     "label": "Српски"
                 }
             ],
-            "default": "de"
+            "default": "en"
         },
         {
           "name": "show-hide-group",
@@ -105,7 +108,7 @@
             "name": "hasHighlights",
             "label": "Show highlight button",
             "type": "checkbox",
-            "default": true,
+            "default": false,
             "help": "Introduces a button for the readers to filter the timeline by highlights"
         },
         {
@@ -119,7 +122,7 @@
             "name": "showLiveblogLogo",
             "label": "Show Liveblog logo",
             "type": "checkbox",
-            "default": false,
+            "default": true,
             "help": "Turn off to hide the “powered by Live Blog” logo"
         },
         {
@@ -131,7 +134,7 @@
             "name": "datetimeFormat",
             "label": "Pick a format or add a custom one",
             "type": "datetimeformat",
-            "default": "D. MMMM YYYY",
+            "default": "lll",
             "help": "Sets the date time format to be used in the embed. Please enter a custom format in valid moment.js format http://momentjs.com/docs/#/parsing/string-format"
         },
         {
@@ -241,7 +244,7 @@
             "name": "showGallery",
             "label": "Show slideshow gallery",
             "type": "checkbox",
-            "default": true,
+            "default": false,
             "help": "Multiple image posts will show up as an image gallery"
         },
         {
@@ -326,7 +329,7 @@
             "name": "renderForESI",
             "label": "Optimise the Live Blog output for ESI",
             "type": "checkbox",
-            "default": true,
+            "default": false,
             "help": "Strips the head and body tags from the Live Blog output to publish it using Edge Side Includes",
             "isAdvanced": true
         },
@@ -360,16 +363,15 @@
             "name": "outputChannelTheme",
             "label": "Output channel theme",
             "type": "select",
-            "default": "zon-amp",
+            "default": "amp",
             "dependsOn": {
                 "outputChannel": true
             },
             "isAdvanced": true,
             "options": [
-                {"value": "zon-default", "label": "ZEIT ONLINE Default Theme"},
-                {"value": "zon-default-solo", "label": "ZEIT ONLINE Default Theme - Solo"},
-                {"value": "zon-amp", "label": "ZEIT ONLINE AMP Theme"},
-                {"value": "zon-amp-solo", "label": "ZEIT ONLINE AMP Theme - Solo"}
+                {"value": "classic", "label": "Classic Theme"},
+                {"value": "default", "label": "Liveblog 3 Default SEO Theme"},
+                {"value": "amp", "label": "Liveblog 3 AMP Theme"}
             ],
             "help": "Which theme should be used for output channel"
         },
@@ -405,37 +407,6 @@
         }
     ],
     "i18n": {
-        "se": {
-            "Highlights": "Höjdpunkter",
-            "Comment by": "Kommentar av",
-            "Powered by": "Powered by",
-            "Advertisement": "Reklam",
-            "Cancel": "Avbryt",
-            "Comment": "Kommentar",
-            "Comment should be maximum 300 characters in length": "Kommentaren får vara högst 300 tecken",
-            "Editorial": "Redaktionellt material",
-            "Load more posts": "Ladda fler inlägg",
-            "Loading": "Laddar",
-            "Name ": "Namn",
-            "Name should be maximum 30 characters in length": "Namnet får bestå av upp till 30 tecken",
-            "Newest first": "Nyaste först",
-            "No posts for now": "Inga inlägg just nu",
-            "Oldest first": "Äldsta först",
-            "One pinned post": "Ett inlägg fastnålat",
-            "pinned posts": "fastnålade inlägg",
-            "Please fill in your Comment": "Fyll i din kommentar",
-            "Please fill in your Name": "Fyll i ditt namn",
-            "Post a comment": "Skicka en kommentar",
-            "See one new update": "Se ett nytt inlägg",
-            "See new updates": "Se nya inlägg",
-            "Send": "Sänd",
-            "Show all posts": "Visa alla inlägg",
-            "Show highlighted post only": "Visa endast höjdpunkter",
-            "Sort by:": "Sortera enligt:",
-            "Updated": "Uppdaterat",
-            "Your comment was sent for approval": "Din kommentar väntar på att godkännas",
-            "credit:": "källa:"
-        },
         "cs": {
           "Highlights": "Hlavní body",
           "Comment by": "Komentář",
@@ -645,6 +616,38 @@
           "Sort by:": "Ordonează după:",
           "Your comment was sent for approval": "Comentariul tău a fost trimis spre aprobare",
           "credit:": "credit:"
+        }, "se": {
+            "Highlights": "Höjdpunkter",
+            "Comment by": "Kommentar av",
+            "Powered by": "Powered by",
+            "Advertisement": "Reklam",
+            "Cancel": "Avbryt",
+            "Comment": "Kommentar",
+            "Comment *": "Kommentar",
+            "Comment should be maximum 300 characters in length": "Kommentaren får vara högst 300 tecken",
+            "Editorial": "Redaktionellt material",
+            "Load more posts": "Ladda fler inlägg",
+            "Loading": "Laddar",
+            "Name ": "Namn",
+            "Name *": "Namn",
+            "Name should be maximum 30 characters in length": "Namnet får bestå av upp till 30 tecken",
+            "Newest first": "Nyaste först",
+            "No posts for now": "Inga inlägg just nu",
+            "Oldest first": "Äldsta först",
+            "One pinned post": "Ett inlägg fastnålat",
+            "pinned posts": "fastnålade inlägg",
+            "Please fill in your Comment": "Fyll i din kommentar",
+            "Please fill in your Name": "Fyll i ditt namn",
+            "Post a comment": "Skicka en kommentar",
+            "See one new update": "Se ett nytt inlägg",
+            "See new updates": "Se nya inlägg",
+            "Send": "Sänd",
+            "Show all posts": "Visa alla inlägg",
+            "Show highlighted post only": "Visa endast höjdpunkter",
+            "Sort by:": "Sortera enligt:",
+            "Updated": "Uppdaterat",
+            "Your comment was sent for approval": "Din kommentar väntar på att godkännas",
+            "credit:": "källa:"
         }, "sr": {
             "Highlights": "Najvažnije",
             "Comment by": "Komentar postavio",
