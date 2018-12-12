@@ -44,6 +44,7 @@
     "lory.js": "^2.3.4",
     "moment": "^2.18.1",
     "npm-exists": "^1.0.1",
+    "node": "11.1.0",
     "nunjucks": "~3.0.1",
     "nunjucks-date-filter": "^0.1.1",
     "promise-polyfill": "^6.0.2",
