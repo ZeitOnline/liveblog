@@ -13,7 +13,7 @@ const { ampifyFilter, addtenFilter } = require('./misc/filters');
 
 // import all gulp tasks
 const { ampValidate } = require('./tasks/amp');
-const { wireDeps, bundleJs, compileLess, doBrowserify } = require('./tasks/assets');
+const { wireDeps, bundleJs, compileSass, doBrowserify } = require('./tasks/assets');
 const { indexInject, templateInject, themeReplace } = require('./tasks/injecting');
 const { precompileParentTemplates, precompileThemeTemplates } = require('./tasks/templates');
 const { SYSTEM_THEMES } = require('./tasks/constants');
@@ -151,7 +151,7 @@ nunjucksEnv.addFilter('ampsupport', ampSupport);
 nunjucks.env = nunjucksEnv;
 
 const paths = {
-  less: 'less/*.less',
+  sass: 'sass/**/*.scss',
   js: ['js/*.js', 'js/*/*.js'],
   jsfile: 'liveblog.js', // Browserify basedir
   cssfile: path.resolve(inputPath, 'liveblog.css'),
@@ -179,20 +179,20 @@ gulp.task('bundle-templates', ['precomp-parent-templates', 'precomp-theme-templa
 
 gulp.task('bundlejs', ['bundle-templates', 'browserify'], bundleJs(theme));
 
-gulp.task('less', ['clean-css'], compileLess(theme, inputPath));
+gulp.task('sass', ['clean-css'], compileSass(theme, inputPath));
 
 gulp.task('amp-validate', [], ampValidate);
 
 // Inject API response into template for dev/test purposes.
-gulp.task('index-inject', ['less', 'bundlejs'], indexInject(theme, apiResponse, nunjucksEnv, inputPath));
+gulp.task('index-inject', ['sass', 'bundlejs'], indexInject(theme, apiResponse, nunjucksEnv, inputPath));
 
 // Inject jinja/nunjucks template for production use.
-gulp.task('template-inject', ['less', 'bundlejs'], templateInject(theme, inputPath));
+gulp.task('template-inject', ['sass', 'bundlejs'], templateInject(theme, inputPath));
 
 // Replace assets paths in theme.json file and reload options.
-gulp.task('theme-replace', ['bundlejs', 'less'], themeReplace(theme, paths, loadThemeJSON));
+gulp.task('theme-replace', ['bundlejs', 'sass'], themeReplace(theme, paths, loadThemeJSON));
 
-gulp.task('server', ['install', 'bundlejs', 'less', 'index-inject'], () => {
+gulp.task('server', ['install', 'bundlejs', 'sass', 'index-inject'], () => {
   plugins.connect.server({
     port: 8008,
     root: '.',
@@ -204,10 +204,10 @@ gulp.task('server', ['install', 'bundlejs', 'less', 'index-inject'], () => {
 // Watch
 gulp.task('watch-static', ['server'], () => {
   var js = gulp.watch(paths.js, ['bundlejs', 'index-inject'])
-    , less = gulp.watch(paths.less, ['less', 'index-inject'])
+    , sass = gulp.watch(paths.sass, ['sass', 'index-inject'])
     , templates = gulp.watch(paths.templates, ['index-inject']);
 
-  [js, less, templates].forEach((el, i) => {
+  [js, sass, templates].forEach((el, i) => {
     el.on('error', (e) => {
       console.error(e.toString());
     });
@@ -229,11 +229,11 @@ gulp.task('clean-css', () => del(['dist/*.css']));
 
 gulp.task('clean-js', () => del(['dist/*.js']));
 
-gulp.task('production', ['install', 'bundlejs', 'less', 'theme-replace', 'template-inject']);
+gulp.task('production', ['install', 'bundlejs', 'sass', 'theme-replace', 'template-inject']);
 
 gulp.task('default', ['set-production', 'production']);
 
 // Default build for development
-gulp.task('devel', ['install', 'bundlejs', 'less', 'theme-replace', 'index-inject']);
+gulp.task('devel', ['install', 'bundlejs', 'sass', 'theme-replace', 'index-inject']);
 
 module.exports = gulp;

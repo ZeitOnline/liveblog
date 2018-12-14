@@ -140,6 +140,97 @@ const compileLess = (theme, inputPath) => {
 }
 
 
+/**
+ * As name suggests, it process common logic for css/sass styling files/assets
+ * @param  {object} theme     Theme settings object
+ * @param  {object} theme     inputPath object
+ * @return {function}         Gulp compatible task
+ */
+const sassCommon = (cleanCss, theme, inputPath) => {
+  const sassFiles = [];
+  let themeSass;
+
+// TODO: für unser Theme haben wir doch gar nicht so viel zum Zusammensammeln!?
+
+  // check if there is _topImports.less file with font @imports etc.
+  // that should be put on very top of compiled css to work
+  if (!theme.onlyOwnCss && theme.extends) {
+    themeSass = path.resolve(`./sass/zon-default.scss`);
+    if (fs.existsSync(themeSass)) {
+      sassFiles.push(themeSass);
+    }
+  }
+
+  // process inherited styles from extended theme first
+  // this makes it easier to override rules with this theme's CSS and avoids specificity war
+  if ( !theme.onlyOwnCss && theme.extends ) {
+    themeSass = path.resolve(`${inputPath}/sass/${theme.extends}.scss`);
+    sassFiles.push(fs.existsSync(themeSass) ? themeLess : path.resolve(`${inputPath}/sass/*.scss`));
+  }
+
+  // Name of the less theme file.
+  themeSass = `./sass/${theme.name}.scss`;
+  // Compile all the files under the less folder if no theme less file pressent.
+  sassFiles.push(fs.existsSync(themeSass) ? themeSass : './sass/*.scss');
+
+  const flat = true;
+  let sassPaths = discoverThemePaths(theme, 'sass', flat);
+
+  return gulp.src(sassFiles)
+    .pipe(plugins.sass({ paths: sassPaths }))
+    .pipe(plugins.autoprefixer({ flexbox: 'no-2009' }))
+
+    /* @TODO:
+     *  generate a full api support with
+     *      - pinned
+     *          - both need to be enable (have support in the code for `stickyPosition`='both')
+     *          - with possition below menu bar
+     *          - with possition above menu bar
+     *      - highlight
+     *      - scorecards
+     *      - text
+     *      - image
+     *      - quote
+     *      - comments
+     *          - with bellow reply
+     *          - with on top reply
+     *      - advertisements
+     *          - local
+     *          - remote
+     *      - all supported emebds
+     *          - twitter
+     *          - facebook
+     *          - instagram
+     *          - youtube
+     *          - generic ( link )
+     * language settings if any.
+     * all posts above needs to be added and then enable purifycss.
+     * otherwise purifycss will remove those css "unused"/not present.
+    */
+    .pipe(plugins.if(cleanCss, plugins.cleanCss({compatibility: 'ie8'})));
+};
+
+
+/**
+ * Compiles less files
+ * @param  {boolean} cleanCss Boolean parameter indicating if clean or not the css
+ * @param  {object} theme     Theme settings object
+ * @param  {object} theme     inputPath object
+ * @return {function}         Gulp compatible task
+ */
+const compileSass = (theme, inputPath) => {
+  return () => {
+    const cleanCss = !debugState();
+
+    return sassCommon(cleanCss, theme, inputPath)
+      .pipe(plugins.concat(`${theme.name}.css`))
+      .pipe(plugins.rev())
+      .pipe(gulp.dest('./dist'))
+      .pipe(plugins.rev.manifest('dist/rev-manifest.json', {merge: true}))
+      .pipe(gulp.dest('.'))
+  }
+}
+
 const doBrowserify = (theme, paths, inputPath)  => {
   return () => {
     let DEBUG = debugState();
@@ -218,7 +309,9 @@ const wireDeps = (theme) => {
 module.exports = {
   wireDeps,
   bundleJs,
-  lessCommon,
-  compileLess,
+  sassCommon,
+  compileSass,
   doBrowserify
 }
+
+// TODO: compileSass wird draußen doch gar nicht genutzt!?!?
