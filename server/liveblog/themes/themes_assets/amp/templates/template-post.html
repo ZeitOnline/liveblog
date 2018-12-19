@@ -25,6 +25,12 @@ class="lb-post list-group-item show-author-avatar {% if item.sticky %}lb-item-pi
 {% if item.deleted %} data-tombstone="true" {% endif %}>
 
   {% block post_header %}{% endblock %}
+  {% include "template-itemheader-type.html" %}
+  {% include "template-itemheader-mark.html" %}
+  {% if item.post_items_type != "advertisement" %}
+    {% include "template-itemheader-date.html" %}
+    {% include "template-author.html" %}
+  {% endif %}
 
   {% block post_body %}
   <div class="lb-type lb-type-{{ item.post_items_type }}">
@@ -83,13 +89,6 @@ class="lb-post list-group-item show-author-avatar {% if item.sticky %}lb-item-pi
     <amp-img src="{{ assets_root }}images/highlighted.svg" width="14" height="13" class="highlight-icon" ></amp-img>
   {% endif %}
 
-  {% if item.post_items_type != "advertisement" %}
-    <div class="lb-post-date">{{ postDate | date('') }}</div>
-    {% if settings.authorPosition == "top"  %}
-      {% include "template-author.html" %}
-    {% endif %}
-  {% endif %}
-
   <!-- checking if post might be a gallery -->
   {% set gallery = false %}
   {% if item.groups and item.groups[1].refs and item.groups[1].refs | length > 1 %}
@@ -119,7 +118,7 @@ class="lb-post list-group-item show-author-avatar {% if item.sticky %}lb-item-pi
         {% elif ref.item.item_type == "comment" %}
           {% include "template-item-comment.html" %}
         {% else %}
-        <article>{{ ref.item.text | safe }}</article>
+          <div class="lb-item__text">{{ ref.item.text | safe }}</div>
         {% endif %}
       </div>
       {% if ref.item.item_type == "comment" %}
@@ -135,9 +134,6 @@ class="lb-post list-group-item show-author-avatar {% if item.sticky %}lb-item-pi
     <div class="lb-post-updated">
       <span>{{ translate('Updated') }}</span> <span class="lb-post-updated-time" >{{ item.content_updated_date | date('') }}</span>
     </div>
-  {% endif %}
-  {% if settings.authorPosition == "bottom"  %}
-    {% include "template-author.html" %}
   {% endif %}
   {% endblock %}
 
