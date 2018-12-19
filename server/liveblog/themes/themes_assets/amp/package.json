@@ -1,6 +1,6 @@
 {
   "name": "liveblog-zon-amp-theme",
-  "version": "3.3.37",
+  "version": "3.3.39-beta.2",
   "description": "ZEIT ONLINE AMP Theme",
   "author": "ZEIT ONLINE <kontakt@zeit.de>",
   "repository": "git@github.com:ZeitOnline/liveblog-amp-theme.git",
@@ -10,6 +10,6 @@
     "build": "gulp"
   },
   "dependencies": {
-    "liveblog-default-theme": "latest"
+    "liveblog-default-theme": "^4.0.0-beta.5"
   }
 }

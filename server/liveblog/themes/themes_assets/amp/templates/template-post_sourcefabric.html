@@ -1,0 +1,144 @@
+{% macro translate(text) %}{% if not options.i18n[settings.language] %}{{ text }}{% elif not options.i18n[settings.language][text] %}{{ text }}{% else %}{{ options.i18n[settings.language][text] }}{% endif %}{% endmacro %}
+
+{% set mainItem = item.groups[1].refs[0].item %}
+{% set postDate = item.published_date %}
+{% if mainItem.commenter %}
+  {% set type = 'comment' %}
+  {% set postDate = mainItem._created %}
+  {% if mainItem.meta._created %}
+    {% set postDate = mainItem.meta._created %}
+  {% endif %}
+{% else %}
+  {% set type = item.post_items_type %}
+{% endif %}
+
+{% set sortTime = item.published_date %}
+{% if item.sticky %}
+  {% set sortTime = item.published_date | addten %}
+{% endif %}
+
+<article 
+  id="{{ item._id | string | replace(':', '') | replace('-', '') | replace('.', '') }}" 
+  data-update-time="{{ item._updated | date('X') }}" 
+  data-sort-time="{{ sortTime | date('X') }}" 
+  class="lb-post lb-post--{{ item.post_items_type | lower }} show-author-avatar 
+  {%- if item.lb_highlight %} lb-post--highlighted{% endif %}
+  {%- if item.sticky %} lb-post--sticky{% endif %}"
+  {%- if item.deleted %} data-tombstone="true" hidden{% endif %}>
+
+  {% include "template-itemheader-type.html" %}
+  {% include "template-itemheader-mark.html" %}
+  {% include "template-itemheader-date.html" %}
+
+  {% block post_body %}
+  <div class="lb-type lb-type-{{ item.post_items_type }}">
+    {% if item.post_items_type == "embed-facebook" %}
+      <amp-img src="{{ assets_root }}images/facebook_logo.png"
+      layout="responsive"
+      width="20"
+      height="20"
+      >
+      </amp-img>
+    {% elif item.post_items_type == "embed-youtube" %}
+      <amp-img src="{{ assets_root }}images/youtube_logo.png"
+      layout="responsive"
+      width="20"
+      height="20"
+      >
+      </amp-img>
+    {% elif item.post_items_type == "embed-twitter" %}
+      <amp-img src="{{ assets_root }}images/twitter_logo_white.png"
+      layout="responsive"
+      width="20"
+      height="20"
+      >
+      </amp-img>
+    {% elif item.post_items_type == "embed-instagram" %}
+      <amp-img src="{{ assets_root }}images/instagram_logo.png"
+      layout="responsive"
+      width="20"
+      height="20"
+      >
+      </amp-img>
+    {% elif item.post_items_type == "embed-brightcove" %}
+      <amp-img src="{{ assets_root }}images/video_logo.png"
+      layout="fixed"
+      width="20"
+      height="20"
+      >
+      </amp-img>
+    {% elif item.post_items_type and item.post_items_type | truncate(5, True, '', 0) == "embed" %}
+      <amp-img src="{{ assets_root }}images/link-icon.png"
+      layout="responsive"
+      width="40"
+      height="40"
+      >
+    {% elif item.post_items_type == "advertisement" %}
+      <div class="lb-advertisement">{{ translate('Advertisement') }}</div>
+    {% endif %}
+  </div>
+
+  {% if item.sticky and item.lb_highlight %}
+    <amp-img src="{{ assets_root }}images/pinpost.svg" width="10" height="13" class="pin-icon" ></amp-img>
+    <amp-img src="{{ assets_root }}images/highlighted.svg" width="14" height="13" class="highlight-icon" ></amp-img>
+  {% elif item.sticky %}
+    <amp-img src="{{ assets_root }}images/pinpost.svg" width="10" height="13" class="pin-icon" ></amp-img>
+  {% elif item.lb_highlight %}
+    <amp-img src="{{ assets_root }}images/highlighted.svg" width="14" height="13" class="highlight-icon" ></amp-img>
+  {% endif %}
+
+  {% if item.post_items_type != "advertisement" %}
+    <div class="lb-post-date">{{ postDate | date('') }}</div>
+    {% if settings.authorPosition == "top"  %}
+      {% include "template-author.html" %}
+    {% endif %}
+  {% endif %}
+
+  <!-- checking if post might be a gallery -->
+  {% set gallery = false %}
+  {% if item.groups and item.groups[1].refs and item.groups[1].refs | length > 1 %}
+    {% set icount = item.groups[1].refs | selectattr("item.item_type", "equalto", "image") | list %}
+    {% if item.groups[1].refs | length == icount | length %}
+        {% set gallery = true %}
+    {% endif %}
+  {% endif %}
+
+  {% if gallery and settings.showGallery %}
+    {% include "template-item-gallery.html" %}
+  {% elif type == "comment" %}
+    {% include "template-post-comment.html" %}
+  {% else %}
+    <!-- item start -->
+    {% for ref in item.groups[1].refs %}
+      {% if ref.item.item_type == "comment" %}
+        <div class="items-containerIndent">
+      {% endif %}
+      <div class="lb-item lb-item-{{ ref.item.item_type|lower|replace(' ', '-') }}">
+        {% if ref.item.item_type == "embed" %}
+          {% include "template-item-embed.html" %}
+        {% elif ref.item.item_type == "image" %}
+          {% include "template-item-image.html" %}
+        {% elif ref.item.item_type == "Scorecard" %}
+          {% include "template-item-scorecard.html" %}
+        {% elif ref.item.item_type == "quote" %}
+          {% include "template-item-quote.html" %}
+        {% elif ref.item.item_type == "comment" %}
+          {% include "template-item-comment.html" %}
+        {% else %}
+          <div class="lb-item__text">{{ ref.item.text | safe }}</div>
+        {% endif %}
+      </div>
+      {% if ref.item.item_type == "comment" %}
+        </div>
+      {% endif %}
+    {% endfor %}
+    <!-- item end -->
+  {% endif %}
+
+  {% if settings.showUpdateDatetime and (item.content_updated_date != item.firstcreated) and item.post_items_type != "advertisement" %}
+    <div class="lb-post-updated">
+      <span>{{ translate('Updated') }}</span> <span class="lb-post-updated-time" >{{ item.content_updated_date | date('') }}</span>
+    </div>
+  {% endif %}
+
+</article>

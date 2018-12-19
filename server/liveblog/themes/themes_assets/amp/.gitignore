@@ -5,3 +5,13 @@
 /package-lock.json
 /template.html
 /yarn.lock
+
+npm-debug.log
+.settings
+.project
+.idea
+node_modules
+*.swp
+.tmp
+Thumbs.db
+!*.pot
