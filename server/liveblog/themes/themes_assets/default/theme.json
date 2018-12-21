@@ -1,6 +1,6 @@
 {
-    "label": "Liveblog 3 Default SEO Theme",
-    "name": "default",
+    "label": "Liveblog 3 ZEIT ONLINE Default Theme",
+    "name": "zon-default",
     "version": "4.0.0-beta.5",
     "asyncTheme": true,
     "seoTheme": true,
@@ -10,7 +10,10 @@
         "Massimo Scamarcia <massimo.scamarcia@sourcefabric.org>",
         "Löic Nogues <loic.nogues@sourcefabric.org>",
         "Aleksandar Backo Jelicic <aleksandar.jelicic@sourcefabric.org>",
-        "Helmy Giacoman <helmy.giacoman@sourcefabric.org>"
+        "Helmy Giacoman <helmy.giacoman@sourcefabric.org>",
+        "Moritz Stoltenburg <moritz.stoltenburg@zeit.de>",
+        "Tobias Weiß <tobias.weiss@zeit.de>",
+        "Thomas Puppe <thomas.puppe@zeit.de>"
     ],
     "repository": {
         "type" : "git",
