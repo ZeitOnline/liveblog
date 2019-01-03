@@ -12,3 +12,7 @@ liveblog-default-theme.zip
 py-test/env
 package-lock.json
 yarn.lock
+
+# no dist in ZON repos
+/*-theme.zip
+/dist
