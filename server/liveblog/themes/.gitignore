@@ -5,3 +5,7 @@ node_modules
 *.swp
 .tmp
 Thumbs.db
+
+# no dist in ZON repos
+/**/*-theme.zip
+/**/dist
