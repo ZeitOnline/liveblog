@@ -15,7 +15,3 @@ node_modules
 .tmp
 Thumbs.db
 !*.pot
-
-# no dist in ZON repos
-/*-theme.zip
-/dist
