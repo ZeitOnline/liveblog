@@ -15,9 +15,12 @@ postsService.$inject = [
     'api',
     '$q',
     'userList',
+    'session',
 ];
 
-export default function postsService(api, $q, userList) {
+export default function postsService(api, $q, userList, session) {
+    var listOfUsers = [];
+
     function filterPosts(filters, postsCriteria) {
         // filters.status
         if (angular.isDefined(filters.status)) {
@@ -113,21 +116,38 @@ export default function postsService(api, $q, userList) {
         return retrievePosts(blogId, postsCriteria);
     }
 
-    function _completeUser(obj) {
+    /**
+     * This method will fetch the information of the creator of the post
+     * or item and will attach it to the item object in order to access the user's
+     * information later (profile_url, name, etc)
+     *
+     * @param       {Object} obj         Post or item belonging to post
+     * @param       {String} postCreator (optional) - Id of user to look for
+     */
+    function _completeUser(obj, postCreator) {
         if (obj.commenter) {
             obj.user = {display_name: obj.commenter};
         } else if (obj.syndicated_creator) {
             obj.user = obj.syndicated_creator;
         } else {
-            // TODO: way too many requests in there
-            // This getUser func is returning a list of users,
-            // who would have thought?
-            userList.getUser(obj.original_creator).then((user) => {
-                obj.user = user;
-            });
+            // we pull a set of users from the backend and store it
+            // in a variable. Max results will be 199, if user is not found
+            // then if will hit backend to try to retrieve user from db
+            var userId = postCreator || obj.original_creator;
+            var postUser = listOfUsers.find((x) => x._id === userId);
+
+            if (!postCreator) {
+                userList.getUser(postCreator || obj.original_creator).then((user) => {
+                    obj.user = user;
+                });
+            } else {
+                obj.user = postUser;
+            }
         }
+
         return obj;
     }
+
     function _completePost(post) {
         let multipleItems = false;
 
@@ -157,7 +177,9 @@ export default function postsService(api, $q, userList) {
                     _completeUser(val.item);
                 }
             });
-            _completeUser(post.mainItem.item);
+
+            // let's now complete user for main post
+            _completeUser(post.mainItem.item, post.original_creator);
 
             resolve(post);
         });
@@ -199,6 +221,16 @@ export default function postsService(api, $q, userList) {
     }
 
     function retrievePosts(blogId, postsCriteria) {
+        // preload users to avoid pulling them one by one
+        // to later use them to attach creator data to each post
+        if (listOfUsers.length === 0) {
+            api('users')
+                .getAll()
+                .then((data) => {
+                    listOfUsers = data;
+                });
+        }
+
         return api('blogs/<regex("[a-f0-9]{24}"):blog_id>/posts', {_id: blogId})
             .query(postsCriteria)
             .then(retrieveSyndications)
@@ -301,11 +333,52 @@ export default function postsService(api, $q, userList) {
         return savePost(post.blog, post, [], deleted);
     }
 
+    function flagPost(postId) {
+        return api('post_flags').save({postId: postId});
+    }
+
+    function removeFlagPost(flag) {
+        api('post_flags').remove(flag);
+    }
+
+    function setFlagTimeout(post, cb) {
+        // perhaps not the best place to put this but I needed this
+        // to be accessible from diferent directives. If there is another/better way
+        // please improve this ;)
+        const editFlag = post.edit_flag;
+        const current = moment().utc();
+        const flatExpireAt = moment(editFlag.expireAt);
+        const seconds = flatExpireAt.diff(current, 'seconds');
+        const key = `flagTimeout_${editFlag.postId}`;
+
+        // if flag is already expired, let's remove id right away
+        if (seconds < 0) {
+            removeFlagPost(editFlag);
+            return;
+        }
+
+        // try to remove previous timeout just in case
+        clearTimeout(window[key]);
+
+        window[key] = setTimeout(() => {
+            post.edit_flag = undefined;
+            cb();
+
+            // then remove also from backend if user is editing
+            if (editFlag.users.indexOf(session.identity) !== -1) {
+                removeFlagPost(editFlag);
+            }
+        }, seconds * 1000);
+    }
+
     return {
         getPosts: getPosts,
         getLatestUpdateDate: getLatestUpdateDate,
         retrievePost: retrievePost,
         savePost: savePost,
+        flagPost: flagPost,
+        removeFlagPost: removeFlagPost,
+        setFlagTimeout: setFlagTimeout,
         saveDraft: function(blogId, post, items, sticky, highlight) {
             return savePost(
                 blogId,
