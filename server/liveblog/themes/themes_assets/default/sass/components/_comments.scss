@@ -1,0 +1,8 @@
+// The comment feature was introduced by sourcefabric in late 2019 for another client.
+// For us, it should not even be rendered. But as a safety net, we hide it anyways.
+
+.header-bar__comment,
+form.comment,
+.comment-sent {
+	display: none !important;
+}
