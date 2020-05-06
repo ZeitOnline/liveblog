@@ -16,6 +16,9 @@
       <amp-img src="{{ blog.picture_url }}" layout="fill"></amp-img>
     </div>
   {% endif %}
+
+  {% include "default/template-watermark.html" %}
+
   {% endblock %}
 
   {% block timeline_header %}
@@ -23,10 +26,10 @@
 
     <div class="lb-social-share">
       <amp-social-share type="email" width="35" height="35"></amp-social-share>
-      <amp-social-share type="gplus" width="35" height="35"></amp-social-share>
       <amp-social-share type="twitter" width="35" height="35"></amp-social-share>
       <amp-social-share type="linkedin" width="35" height="35"></amp-social-share>
       <amp-social-share type="whatsapp" width="35" height="35"></amp-social-share>
+      <amp-social-share type="system" width="35" height="35"></amp-social-share>
     </div>
 
     {% if settings.showLiveblogLogo or output.logo_url %}

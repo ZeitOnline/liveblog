@@ -48,6 +48,7 @@ var buttons = {
       viewmodel.loadPostsPage()
         .then(view.renderPosts)
         .then(view.displayNewPosts)
+        .then(view.consent.init)
         .then(view.adsManager.refreshAds)
         .then(view.updateTimestamps)
         .catch(catchError);
@@ -126,22 +127,25 @@ function loadSort(sortBy) {
   // initialy on server sort params are set as newest_first, oldest_first
   // on client we dont use this, so this is temp fix
   switch (sortBy) {
-  case 'oldest_first':
-  case 'ascending':
-    sortBy = 'ascending';
-    break;
-  case 'newest_first':
-  case 'descending':
-    sortBy = 'descending';
-    break;
-  default:
-    sortBy = 'editorial';
+    case 'oldest_first':
+    case 'ascending':
+      sortBy = 'ascending';
+      break;
+    case 'newest_first':
+    case 'descending':
+      sortBy = 'descending';
+      break;
+    default:
+      sortBy = 'editorial';
+
+    window.playersState = {};
   }
 
   return viewmodel.loadPosts({sort: sortBy, notDeleted: true})
     .then(view.renderTimeline)
     .then(view.displayNewPosts)
     .then(view.toggleSortBtn(sortBy))
+    .then(view.consent.init)
     .then(view.adsManager.refreshAds)
     .catch(catchError);
 }

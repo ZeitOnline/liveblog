@@ -1,6 +1,12 @@
 <!-- inject:template-content -->
 {% macro translate(text) %}{% if not options.i18n[settings.language] %}{{ text }}{% elif not options.i18n[settings.language][text] %}{{ text }}{% else %}{{ options.i18n[settings.language][text] }}{% endif %}{% endmacro %}
 
+{% include "template-embed-providers.html" %}
+
+{% include "template-watermark.html" %}
+
+{% include "template-gdpr-consent-placeholder.html" %}
+
 <div data-timeline class="lb-timeline {{ settings.language }}">
   {% block timeline_top %}
 
@@ -121,8 +127,6 @@
 
 
 </div>
-
-{% include "template-embed-providers.html" %}
 
 {% if include_js_options %}
   <script type="text/javascript">

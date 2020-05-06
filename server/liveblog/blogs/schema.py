@@ -26,7 +26,7 @@ blogs_schema = {
     },
     'blog_status': {
         'type': 'string',
-        'allowed': ['open', 'closed'],
+        'allowed': ['open', 'closed', 'deleted'],
         'default': 'open'
     },
     'members': {
@@ -81,6 +81,12 @@ blogs_schema = {
         'type': 'datetime',
         'default': None
     },
+    'delete_not_before': {
+        'type': 'datetime',
+        'default': None,
+        'nullable': True,
+        'required': False
+    },
     'last_created_post': {
         'type': 'dict',
         'schema': {
@@ -105,5 +111,17 @@ blogs_schema = {
         'type': 'integer',
         'nullable': True,
         'default': 500
+    },
+    'users_can_comment': {
+        'type': 'string',
+        'allowed': ['unset', 'enabled', 'disabled'],
+        'default': 'unset'
+    },
+    'consumers_settings': {
+        'type': 'dict',
+        'mapping': {
+            'type': 'object',
+            'enabled': False
+        }
     }
 }

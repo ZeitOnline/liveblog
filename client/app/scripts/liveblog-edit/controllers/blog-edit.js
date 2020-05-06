@@ -18,6 +18,8 @@ import adsRemoteTpl from 'scripts/liveblog-edit/views/ads-remote.ng1';
 import './../../ng-sir-trevor';
 import './../../sir-trevor-blocks';
 import './../unread.posts.service';
+import './../components/inactivity.modal';
+import {TAGS, ALLOW_PICK_MULTI_TAGS, YOUTUBE_PRIVACY_STATUS} from '../../liveblog-common/constants';
 
 BlogEditController.$inject = [
     'api',
@@ -45,6 +47,7 @@ BlogEditController.$inject = [
     '$timeout',
     '$rootScope',
     '$location',
+    'InactivityModal',
 ];
 
 export default function BlogEditController(
@@ -72,7 +75,8 @@ export default function BlogEditController(
     $templateCache,
     $timeout,
     $rootScope,
-    $location
+    $location,
+    InactivityModal
 ) {
     var self = this;
     // @TODO: remove this when theme at blog level.
@@ -81,19 +85,41 @@ export default function BlogEditController(
     // init with empty vector
     $scope.freetypesData = {}; $scope.freetypeControl = {}; $scope.validation = {};
     $scope.freetypesOriginal = {};
+    $scope.liveblogSettings = {};
+    $scope.showTagsSelector = false;
     $rootScope.uploadingImage = false;
+    $rootScope.globalTags = null;
 
     if (blog.blog_preferences.theme) {
         themesService.get(blog.blog_preferences.theme).then((themes) => {
             blog.blog_preferences.theme = themes[0];
         });
     }
+
     const emptyPRegex = /<p><br\/?><\/p>/g;
     const emptyDivRegex = /<div><br\/?><\/div>/g;
     const targetIconRegex = /target\s*=\s*"<\/?i>blank"/g;
-    // start listening for unread posts.
+    const whereParams = {key: {$in: [TAGS, ALLOW_PICK_MULTI_TAGS, YOUTUBE_PRIVACY_STATUS]}};
 
-    unreadPostsService.startListening();
+    // let's get global tags and settings for post only once, when the controller loads
+    api.global_preferences.query({where: whereParams})
+        .then((preferences) => {
+            const tagSetting = _.find(preferences._items, (item) => item.key === TAGS);
+            const otherPreferences = _.filter(preferences._items, (item) => item.key !== TAGS);
+
+            // using rootScope here in order to access this value from other controllers
+            $rootScope.globalTags = tagSetting ? tagSetting.value || [] : [];
+
+            _.forEach(otherPreferences, (setting) => {
+                $scope.liveblogSettings[setting.key] = setting.value;
+            });
+
+            $scope.showTagsSelector = true;
+        });
+
+    // start listening for unread posts.
+    unreadPostsService.startListening(blog);
+
     // return the list of items from the editor
     function getItemsFromEditor() {
         if (!isPostFreetype()) {
@@ -159,7 +185,7 @@ export default function BlogEditController(
 
     // determine if the loaded item is freetype
     function isItemFreetype(itemType) {
-        var regularItemTypes = ['text', 'image', 'embed', 'quote', 'comment'];
+        var regularItemTypes = ['text', 'video', 'image', 'embed', 'quote', 'comment'];
 
         if (regularItemTypes.indexOf(itemType) !== -1) {
             return false;
@@ -185,17 +211,6 @@ export default function BlogEditController(
         var areallBlocksempty = _.every(self.editor.blocks, (block) => block.isEmpty());
 
         return areallBlocksempty || !$scope.isCurrentPostUnsaved();
-    }
-
-    function removeEditFlag(postId, flag) {
-        postsService.removeFlagPost(flag);
-        findPostAndUpdate(postId, undefined, angular.noop);
-    }
-
-    function cleanUpFlag() {
-        if ($scope.currentPost && $scope.currentPost.edit_flag) {
-            removeEditFlag($scope.currentPost._id, $scope.currentPost.edit_flag);
-        }
     }
 
     // ask in a modalbox if the user is sure to want to overwrite editor.
@@ -239,7 +254,9 @@ export default function BlogEditController(
     function doOrAskBeforeIfExceedsPostsLimit($scope) {
         var deferred = $q.defer();
 
-        if (blog.posts_limit != 0 && blog.total_posts >= blog.posts_limit && !(localStorage.getItem('preventDialog'))) {
+        if (blog.posts_limit !== 0 && blog.total_posts >= blog.posts_limit &&
+                !(localStorage.getItem('preventDialog'))
+        ) {
             modal
                 .confirm(gettext(`You will lose the oldest post as posts
                     limit exceeds. Are you sure to continue?<br/>
@@ -269,62 +286,6 @@ export default function BlogEditController(
         }
     });
 
-    /**
-     * Basically this just receives the data from flag registry with
-     * the users information attached to it. It also includes the flag TTL
-     */
-    $scope.$on('posts:updateFlag', (event, data) => {
-        data.flags.forEach((flag, index) => {
-            findPostAndUpdate(flag.postId, flag, afterPostFlagUpdate);
-        });
-    });
-
-    $scope.$on('posts:deletedFlag', (event, data) => {
-        const refreshCallback = () => {
-            $scope.$apply();
-        };
-        const flag = data.update ? data.flag : undefined;
-        const callback = data.update ? afterPostFlagUpdate : refreshCallback;
-
-        findPostAndUpdate(data.flag.postId, flag, callback);
-    });
-
-    function findPostAndUpdate(postId, flag, cb) {
-        let foundPost;
-
-        // let's first try to update at sticky items
-        self.timelineStickyInstance.pagesManager.updatePostFlag(postId, flag, (post) => {
-            cb(post, flag);
-            foundPost = post;
-        });
-
-        if (!foundPost) {
-            // then let's try to update it in timeline if not found
-            self.timelineInstance.pagesManager.updatePostFlag(postId, flag, (post) => {
-                cb(post, flag);
-            });
-        }
-    }
-
-    function afterPostFlagUpdate(post, flag) {
-        // let's also update post if its being edited
-        if ($scope.currentPost && $scope.currentPost._id === post._id) {
-            $scope.currentPost.edit_flag = flag;
-        }
-
-        // to trigger rendering
-        $scope.$apply();
-
-        // let's set the timeout and refresh when expired
-        postsService.setFlagTimeout(post, () => {
-            if ($scope.currentPost && post._id === $scope.currentPost._id) {
-                cleanEditor();
-            } else {
-                $scope.$apply();
-            }
-        });
-    }
-
     // remove and clean every items from the editor
     function cleanEditor(actionDisabled) {
         var actionDisable = actionDisabled;
@@ -334,6 +295,7 @@ export default function BlogEditController(
         }
 
         $scope.enableEditor = false;
+        $scope.showTagsSelector = false;
 
         actionDisable = typeof actionDisable === 'boolean' ? actionDisable : true;
         if ($scope.freetypeControl.reset) {
@@ -344,10 +306,16 @@ export default function BlogEditController(
         $scope.currentPost = undefined;
         $scope.sticky = false;
         $scope.highlight = false;
+        $scope.currentPostTags = [];
 
         $timeout(() => {
             $scope.enableEditor = true;
         });
+
+        // separate timeout to avoid issue with sir trevor reinitialize
+        setTimeout(() => {
+            $scope.showTagsSelector = true;
+        }, 100);
     }
 
     // retieve the blog's public url
@@ -406,6 +374,7 @@ export default function BlogEditController(
             post_status: 'open',
             sticky: $scope.sticky,
             lb_highlight: $scope.highlight,
+            tags: $scope.currentPostTags,
         };
 
         postsService.savePost(blog._id, $scope.currentPost, getItemsFromEditor(), postParams)
@@ -433,6 +402,7 @@ export default function BlogEditController(
         syndicationEnabled: $injector.has('lbNotificationsCountDirective'),
         selectedUsersFilter: [],
         currentPost: undefined,
+        currentPostTags: [],
         blogSecurityService: blogSecurityService,
         unreadPostsService: unreadPostsService,
         preview: false,
@@ -487,13 +457,20 @@ export default function BlogEditController(
                 $scope.actionDisabled = _.isEmpty(input);
             });
         },
+        /**
+         * Alternative debounced function triggered on editor changes.
+         * The idea with this is to be able to keep the edit flag alive
+         * while user keeps active in the editor
+         */
+        debouncedEditorChanges: function() {
+            if ($scope.currentPost) {
+                postsService.flagPost($scope.currentPost._id);
+            }
+        },
+
         actionStatus: function() {
             if (isPostFreetype()) {
                 if (angular.isDefined($scope.currentPost)) {
-                    // @TODO: ask about specific behaviour in draft or submitted
-                    // !$scope.freetypeControl.isValid()
-                    //     && ($scope.currentPost.post_status === 'draft'
-                    //         || $scope.currentPost.post_status === 'submitted');
                     return !$scope.freetypeControl.isValid();
                 }
 
@@ -512,7 +489,7 @@ export default function BlogEditController(
         },
         showSaveAsDraft: function() {
             if (angular.isDefined($scope.currentPost)) {
-                return $scope.currentPost.original_creator === session.identity._id;
+                return $scope.currentPost.original_creator._id === session.identity._id;
             }
 
             return true;
@@ -522,14 +499,18 @@ export default function BlogEditController(
                 cleanEditor(false);
                 let delay = 0;
 
+                $scope.showTagsSelector = false;
                 $scope.currentPost = angular.copy(post);
                 $scope.sticky = $scope.currentPost.sticky;
                 $scope.highlight = $scope.currentPost.lb_highlight;
+                $scope.currentPostTags = $scope.currentPost.tags || [];
+
                 // @TODO handle this better ASAP, remove $timeout and find the cause of the delay
                 if (isPostFreetype()) {
                     setDefautPostType();
                     delay = 5;
                 }
+
                 $timeout(() => {
                     var items = post.groups[1].refs;
 
@@ -537,6 +518,7 @@ export default function BlogEditController(
                         var itm = item;
 
                         itm = itm.item;
+
                         if (angular.isDefined(itm)) {
                             if (isItemFreetype(itm.item_type)) {
                                 // post it freetype so we need to reder it
@@ -550,6 +532,7 @@ export default function BlogEditController(
                     });
 
                     $scope.actionDisabled = false;
+                    $scope.showTagsSelector = true;
                 }, delay);
             }
 
@@ -586,6 +569,7 @@ export default function BlogEditController(
                 .then((post) => {
                     notify.pop();
                     notify.info(gettext('Contribution submitted'));
+                    cleanUpFlag();
                     cleanEditor();
                     $scope.selectedPostType = 'Default';
                     $scope.actionPending = false;
@@ -603,6 +587,7 @@ export default function BlogEditController(
                 .then((post) => {
                     notify.pop();
                     notify.info(gettext('Draft saved'));
+                    cleanUpFlag();
                     cleanEditor();
                     $scope.selectedPostType = 'Default';
                     $scope.actionPending = false;
@@ -636,6 +621,11 @@ export default function BlogEditController(
                 cleanUpFlag();
             });
         },
+
+        onTagsChange: (tags) => {
+            $scope.currentPostTags = tags;
+        },
+
         filterHighlight: function(highlight) {
             $scope.filter.isHighlight = highlight;
             self.timelineInstance.pagesManager.changeHighlight(highlight);
@@ -657,7 +647,11 @@ export default function BlogEditController(
             $route.updateParams(params);
             unreadPostsService.reset(panel);
         },
+
+        // SirTrevor params that can be accessed using this.getOptions()
+        // from inside of a sir trevor block
         stParams: {
+            liveblogSettings: () => $scope.liveblogSettings,
             disableSubmit: function(actionDisabled) {
                 $scope.actionDisabled = actionDisabled;
                 // because this is called outside of angular scope from sir-trevor.
@@ -706,6 +700,80 @@ export default function BlogEditController(
                         }, handleError);
                 });
             },
+            displayModalBox: function() {
+                function openCredentialForm() {
+                    const helpLink = 'https://wiki.sourcefabric.org/x/PABIBg';
+                    const callbackURI = `${config.server.url}/video_upload/oauth2callback`;
+
+                    // @NOTE: this is ugly. Figure out how to improve this.
+                    const bodyText = `In order to be able to upload videos to Youtube directly from Live Blog
+                        you need to provide your credentials file.
+                        Follow <a target="_blank" href="${helpLink}">this guide</a> to generate yours.
+                        <br/><br/>
+                        <input type="file" ng-model="jsonFile" id="jsonFile" accept=".json" />
+                        <div id="secrets-file"></div>
+                        <script>
+                            var uploadBtn = $('[ng-click="ok()"]');
+                            uploadBtn.prop('disabled', true);
+                            $('#jsonFile').on('change', function() {
+                                var file = $(this).prop('files')[0];
+                                document.getElementById('secrets-file').value = file;
+                                uploadBtn.prop('disabled', false);
+                            });
+                        </script>\
+                        <br/><b>Important Note:</b><br/>\
+                        Make sure that Authorized Redirect URI in Google Console project is set to
+                        ${callbackURI}`;
+                    const headerText = 'Upload your Youtube\'s credentials - Beta';
+                    const okText = 'Upload';
+
+                    return modal.confirm({headerText, bodyText, okText});
+                }
+
+                openCredentialForm().then(() => {
+                    let secretsFile = document.getElementById('secrets-file').value;
+
+                    upload.start({
+                        method: 'POST',
+                        url: `${config.server.url}/video_upload/credential`,
+                        data: {
+                            secretsFile: secretsFile,
+                            currentUrl: window.location.href,
+                        },
+                    }).then((response) => {
+                        notify.pop();
+                        notify.info(gettext('Saved credentials. Redirecting...'));
+                        // redirect to google verification screen
+                        window.location.replace(response.data);
+                    });
+                }, () => cleanEditor(true));
+            },
+            getAccessToken: function(successCallback, errorCallback) {
+                $scope.actionPending = true;
+                const handleError = function(response) {
+                    errorCallback(response.data ? response.data._message : undefined);
+                    $scope.actionPending = true;
+                };
+
+                return $http({
+                    url: `${config.server.url}/video_upload/token`,
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                })
+                    .then((response) => {
+                        $scope.actionPending = false;
+                        if (response.data !== 'Not Found') {
+                            successCallback(response.data);
+                        } else {
+                            errorCallback(response.data);
+                        }
+                    }, handleError);
+            },
+            isAdmin: function() {
+                return blogSecurityService.isAdmin;
+            },
             gogoGadgetoRemoteImage: function(imgURL) {
                 return $http({
                     url: `${config.server.url}/archive/draganddrop`,
@@ -723,11 +791,13 @@ export default function BlogEditController(
                             throw response.data._issues;
                         }
 
-                        return {media: {
-                            _id: response.data._id,
-                            _url: response.data.renditions.thumbnail.href,
-                            renditions: response.data.renditions,
-                        }};
+                        return {
+                            media: {
+                                _id: response.data._id,
+                                _url: response.data.renditions.thumbnail.href,
+                                renditions: response.data.renditions,
+                            },
+                        };
                     });
             },
         },
@@ -773,9 +843,10 @@ export default function BlogEditController(
             $scope.preview = !$scope.preview;
         },
     });
+
     // initalize the view with the editor panel
-    var panel = angular.isDefined($routeParams.panel) ? $routeParams.panel : 'editor',
-        syndId = angular.isDefined($routeParams.syndId) ? $routeParams.syndId : null;
+    var panel = angular.isDefined($routeParams.panel) ? $routeParams.panel : 'editor';
+    var syndId = angular.isDefined($routeParams.syndId) ? $routeParams.syndId : null;
 
     // Here we define an object instead of simple array.
     // because this variable needs to be update in the ingest-panel directive
@@ -797,6 +868,103 @@ export default function BlogEditController(
         }
     });
 
+    /* --------  let's put all related to edit post flag (if possible)  -------- */
+
+    function removeEditFlag(postId, flag) {
+        postsService.removeFlagPost(flag);
+        findPostAndUpdate(postId, undefined, angular.noop);
+    }
+
+    function cleanUpFlag() {
+        if ($scope.currentPost && $scope.currentPost.edit_flag) {
+            removeEditFlag($scope.currentPost._id, $scope.currentPost.edit_flag);
+        }
+    }
+
+    function findPostAndUpdate(postId, flag, cb) {
+        let foundPost;
+        let placesToLook = [
+            self.timelineStickyInstance,
+            self.timelineInstance,
+            self.commentPostsInstance,
+            self.contributionsPostsInstance,
+            self.draftPostsInstance,
+        ];
+
+        // let's loop over the possible places to find the post and update it
+        for (let place of placesToLook) {
+            // NOTE: temporarily check this. We need to decide if we can modify
+            // users comments coming from frontend ui/blog
+            if (!place) {
+                continue;
+            }
+
+            place.pagesManager.updatePostFlag(postId, flag, (post) => {
+                cb(post, flag);
+                foundPost = post;
+            });
+
+            if (foundPost) {
+                break;
+            }
+        }
+    }
+
+    const inactivityModal = new InactivityModal({
+        onKeepWorking: () => {
+            postsService.flagPost($scope.currentPost._id);
+            inactivityModal.resetBrowserTab();
+        },
+        onSaveAndClose: () => {
+            $scope.publish();
+            inactivityModal.resetBrowserTab();
+        },
+        onClose: () => {
+            cleanEditor();
+            inactivityModal.resetBrowserTab();
+        },
+    });
+
+    $scope.$on('$destroy', inactivityModal.destroy);
+
+    function afterPostFlagUpdate(post, flag) {
+        // let's also update post if its being edited
+        if ($scope.currentPost && $scope.currentPost._id === post._id) {
+            $scope.currentPost.edit_flag = flag;
+        }
+
+        // to trigger rendering
+        $scope.$apply();
+
+        // let's set the timeout and refresh when expired
+        postsService.setFlagTimeout(post, () => {
+            if ($scope.currentPost && post._id === $scope.currentPost._id) {
+                inactivityModal.open();
+                inactivityModal.iconTabAlert();
+            } else {
+                $scope.$apply();
+            }
+        });
+    }
+
+    // Basically this just receives the data from flag registry with
+    // the users information attached to it. It also includes the flag TTL
+    $scope.$on('posts:updateFlag', (event, data) => {
+        data.flags.forEach((flag, index) => {
+            findPostAndUpdate(flag.postId, flag, afterPostFlagUpdate);
+        });
+    });
+
+    $scope.$on('posts:deletedFlag', (event, data) => {
+        const refreshCallback = () => {
+            $scope.$apply();
+        };
+        const flag = data.update ? data.flag : undefined;
+        const callback = data.update ? afterPostFlagUpdate : refreshCallback;
+
+        findPostAndUpdate(data.flag.postId, flag, callback);
+    });
+
     // we listen to change route event in order to remove flag when leaving the
     // the editor view. We also make sure to destroy it to avoid multiple listeners
     const sentinel = $rootScope.$on('$routeChangeSuccess', (e, currentRoute, prevRoute) => {
@@ -815,4 +983,25 @@ export default function BlogEditController(
             blog['total_posts'] = data.stats['total_posts'];
         }
     });
+
+    const removeFlagOnLeaving = () => {
+        if ($scope.currentPost && $scope.currentPost.edit_flag) {
+            const flag = $scope.currentPost.edit_flag;
+            const url = `${config.server.url}/post_flags/${flag._id}`;
+
+            postsService.syncRemoveFlag(url, flag._etag);
+        }
+    };
+
+    angular.element(window).on('beforeunload', () => {
+        if ($scope.currentPost) {
+            return 'Are you sure you want to leave?';
+        }
+    });
+
+    angular.element(window).on('unload', () => {
+        removeFlagOnLeaving();
+    });
+
+    /* --------  end of post flagging stuff  --------- */
 }

@@ -93,6 +93,10 @@ class ConsumerService(BaseService):
             raise ConsumerAPIError('Unable to get consumer "{}".'.format(consumer_id))
 
         api_url = trailing_slash(consumer['webhook_url'])
+        if not consumer.get('webhook_enabled', False) and 'localhost' not in api_url:
+            logger.warning('Unable to send request. Consumer "{}" webhook is not available'.format(api_url))
+            return
+
         try:
             response = send_api_request(api_url, consumer_blog_token, method=method, data=data, json_loads=json_loads,
                                         timeout=timeout)
@@ -101,9 +105,40 @@ class ConsumerService(BaseService):
         else:
             return response
 
+    def _allowed_by_tags(self, consumer_id, blog_id, post):
+        """
+        Checks if the consumer has the right tags so syndicated content can be sent
+        """
+        blog = get_resource_service('client_blogs').find_one(req=None, _id=blog_id)
+        consumers_settings = blog.get('consumers_settings', {})
+        settings = consumers_settings.get(str(consumer_id), {'tags': None})
+        tags = settings.get('tags', None)
+        post_tags = post.get('tags', [])
+
+        # means no settings has been set for consumer
+        if tags is None:
+            return True
+
+        return any([x in tags for x in post_tags])
+
     def send_post(self, syndication_out, new_post, action='created'):
+        """Receives post information and sends it over webhook request to consumer
+        It checks consumers tags with posts tags to make sure only filtered content is sent.
+        If not tags are found for the consumer in blog settings it sends the post.
+        """
+
         blog_token = syndication_out['token']
         consumer_id = syndication_out['consumer_id']
+
+        try:
+            post = new_post['post']
+            blog_id = post['blog']
+
+            if not self._allowed_by_tags(consumer_id, blog_id, post):
+                return
+        except KeyError as err:
+            logger.error('Error while getting blog id in `send_post`. Err: "{0}"'.format(err))
+
         if action not in WEBHOOK_METHODS:
             raise NotImplementedError('send_syndication_post "{}" not implemented yet.'.format(action))
         else:
