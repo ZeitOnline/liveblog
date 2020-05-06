@@ -1,6 +1,6 @@
 {
   "name": "liveblog-client",
-  "version": "3.7.1",
+  "version": "3.8.0",
   "repository": {
     "type": "git",
     "url": "git@github.com:liveblog/liveblog.git"
@@ -10,7 +10,7 @@
     "eslint": "grunt eslint",
     "tslint": "tsc --noEmit && tslint -c tslint.json 'app/**/*.{ts,tsx}'",
     "lint": "npm run eslint && npm run tslint",
-    "webdriver-update": "./node_modules/protractor/bin/webdriver-manager update --gecko false --versions.chrome 77.0.3865.40 --versions.standalone 3.9.1",
+    "webdriver-update": "./node_modules/protractor/bin/webdriver-manager update --gecko false --versions.chrome 80.0.3987.106 --versions.standalone 3.9.1",
     "e2e": "./node_modules/.bin/protractor protractor-conf.js"
   },
   "licenses": [
@@ -25,7 +25,7 @@
     "@types/jquery": "^3.3.29",
     "@types/lodash": "^4.14.137",
     "@types/react": "^16.8.18",
-    "@types/react-select": "^3.0.2",
+    "@types/react-select": "3.0.9",
     "@typescript-eslint/eslint-plugin-tslint": "^1.7.0",
     "@typescript-eslint/parser": "^1.7.0",
     "bootstrap": "3.3.7",
@@ -81,7 +81,7 @@
     "superdesk-ui-framework": "^1.8.14",
     "ts-loader": "^3.5.0",
     "tslint": "^5.16.0",
-    "typescript": "^3.4.5",
+    "typescript": "3.4.5",
     "webpack": "3.6.0",
     "webpack-dev-server": "2.8.2"
   },
