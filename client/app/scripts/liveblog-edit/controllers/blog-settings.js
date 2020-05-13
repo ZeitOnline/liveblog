@@ -14,8 +14,10 @@ import _ from 'lodash';
 import './../../ng-sir-trevor';
 import './../../sir-trevor-blocks';
 import './../unread.posts.service';
+import {DELETED_STATE} from '../../liveblog-bloglist/controllers/constants';
 
 import outputEmbedCodeTpl from 'scripts/liveblog-edit/views/output-embed-code-modal.ng1';
+
 
 BlogSettingsController.$inject = [
     '$scope',
@@ -27,16 +29,13 @@ BlogSettingsController.$inject = [
     'gettext',
     'modal',
     '$q',
-    'upload',
     'datetimeHelper',
     'config',
     'blogSecurityService',
     'moment',
     'superdesk',
-    'urls',
     '$rootScope',
     'postsService',
-
 ];
 
 function BlogSettingsController(
@@ -49,13 +48,11 @@ function BlogSettingsController(
     gettext,
     modal,
     $q,
-    upload,
     datetimeHelper,
     config,
     blogSecurityService,
     moment,
     superdesk,
-    urls,
     $rootScope,
     postsService
 ) {
@@ -74,7 +71,7 @@ function BlogSettingsController(
         var deferred = $q.defer();
         let count = (vm.blog.total_posts - vm.newBlog.posts_limit);
 
-        if (vm.newBlog.posts_limit != 0 && count > 0) {
+        if (vm.newBlog.posts_limit !== 0 && count > 0) {
             modal
                 .confirm(gettext(`You will lose the oldest posts beyond
                     set limit. Are you sure to continue?`))
@@ -88,7 +85,7 @@ function BlogSettingsController(
     function deleteOldPosts() {
         let count = (vm.blog.total_posts - vm.newBlog.posts_limit);
 
-        if (vm.newBlog.posts_limit != 0 && count > 0) {
+        if (vm.newBlog.posts_limit !== 0 && count > 0) {
             postsService.getPosts(vm.blog._id, {excludeDeleted: true, sticky: false, highlight: false})
                 .then((posts) => {
                     let deleted = {deleted: true};
@@ -117,6 +114,7 @@ function BlogSettingsController(
         newBlog: angular.copy(blog),
         deactivateTheme: config.subscriptionLevel === 'solo',
         blogPreferences: angular.copy(blog.blog_preferences),
+        consumersSettings: angular.copy(blog.consumers_settings),
         availableLanguages: [],
         original_creator: {},
         availableThemes: [],
@@ -138,6 +136,11 @@ function BlogSettingsController(
             {text: 2000, value: 2000},
             {text: 3000, value: 3000},
         ],
+        canCommentOptions: [
+            {text: 'Unset', value: 'unset'},
+            {text: 'Enabled', value: 'enabled'},
+            {text: 'Disabled', value: 'disabled'},
+        ],
         // used as an aux var to be able to change members and safely cancel the changes
         blogMembers: [],
         // users to remove from the pending queue once the changes are saved
@@ -155,6 +158,25 @@ function BlogSettingsController(
         embedMultiHight: false,
         outputs: [],
         outputEmbedCodeTpl: outputEmbedCodeTpl,
+        selectedConsumer: null,
+        selectedConsumerTags: [],
+        showTagsSelector: true,
+        onConsumerTagsChange: function(tags) {
+            if (!vm.selectedConsumer) return;
+
+            const id = vm.selectedConsumer._id;
+            let settings = vm.newBlog.consumers_settings || {};
+
+            if (id in settings) {
+                settings[id].tags = tags;
+            } else {
+                settings[id] = {tags: tags};
+            }
+
+            vm.newBlog.consumers_settings = settings;
+            vm.forms.dirty = true;
+            $scope.$apply();
+        },
         loadOutputs: function(silent = false) {
             if (!silent) {
                 vm.outputsLoading = true;
@@ -185,7 +207,7 @@ function BlogSettingsController(
             vm.output = output;
             const outputTheme = _.find(vm.availableThemes, (theme) => theme.name === vm.output.theme);
 
-            if (outputTheme.styles && outputTheme.settings.removeStylesESI) {
+            if (outputTheme.styles && outputTheme.settings && outputTheme.settings.removeStylesESI) {
                 vm.output.styleUrl = outputTheme.public_url + outputTheme.styles[outputTheme.styles.length - 1];
             }
         },
@@ -243,8 +265,10 @@ function BlogSettingsController(
             });
         },
         changeTab: function(tab) {
-            // outputs does not dirty the blog settings
-            if (vm.tab && vm.tab !== 'outputs') {
+            // outputs and consumer does not dirty the blog settings
+            const notDirty = ['outputs', 'consumers'];
+
+            if (vm.tab && notDirty.indexOf(vm.tab) === -1) {
                 vm.forms.dirty = vm.forms.dirty || vm.forms[vm.tab].$dirty;
             }
             vm.tab = tab;
@@ -332,6 +356,8 @@ function BlogSettingsController(
                 start_date: startDate,
                 members: members,
                 posts_limit: vm.newBlog.posts_limit,
+                users_can_comment: vm.newBlog.users_can_comment,
+                consumers_settings: vm.newBlog.consumers_settings,
             };
 
             angular.extend(vm.newBlog, changedBlog);
@@ -346,6 +372,7 @@ function BlogSettingsController(
                     vm.blog = blog;
                     vm.newBlog = angular.copy(blog);
                     vm.blogPreferences = angular.copy(blog.blog_preferences);
+                    vm.consumersSettings = angular.copy(blog.consumers_settings);
                     // remove accepted users from the queue
                     if (vm.acceptedMembers.length) {
                         _.each(vm.acceptedMembers, (member) => {
@@ -374,20 +401,39 @@ function BlogSettingsController(
             return deferred.promise;
         },
         askRemoveBlog: function() {
-            modal.confirm(gettext('Are you sure you want to delete the blog?'))
+            modal.confirm(`The blog will be in <b>Deleted Blogs</b> tab during ${config.daysRemoveDeletedBlogs}
+                day(s), after that period will be removed permanently.<br /><br />
+                Are you sure you want to delete this blog?`)
                 .then(() => {
                     vm.removeBlog();
                 });
         },
         removeBlog: function() {
-            api.blogs.remove(angular.copy(vm.blog)).then((message) => {
+            const blog = vm.blog;
+            const changedBlog = {
+                blog_status: DELETED_STATE.code,
+            };
+
+            let newBlog = angular.copy(blog);
+
+            angular.extend(newBlog, changedBlog);
+            delete newBlog._latest_version;
+            delete newBlog._current_version;
+            delete newBlog._version;
+            delete newBlog.marked_for_not_publication;
+            delete newBlog._type;
+            delete newBlog.selected;
+            delete newBlog.firstcreated;
+            newBlog.original_creator = blog.original_creator._id;
+
+            blogService.update(blog, newBlog).then((resp) => {
                 notify.pop();
-                notify.info(gettext('Blog removed'));
+                notify.info(gettext('The blog will be deleted'));
                 $location.path('/liveblog');
             }, () => {
                 notify.pop();
                 notify.error(gettext('Something went wrong'));
-                $location.path('/liveblog/edit/' + vm.blog._id);
+                $location.path('/liveblog/edit/' + blog._id);
             });
         },
         close: function() {
@@ -416,16 +462,24 @@ function BlogSettingsController(
             });
         },
     });
+
     // retieve the blog's public url
     const qPublicUrl = blogService.getPublicUrl(blog).then((url) => {
         vm.publicUrl = url;
     });
-    // load available languages
 
+    // load available languages
     api('languages')
         .query()
         .then((data) => {
             vm.availableLanguages = data._items;
+        });
+
+    // load consumers
+    api('consumers')
+        .query()
+        .then((data) => {
+            vm.consumers = data._items;
         });
 
     // load available themes
@@ -460,7 +514,7 @@ var liveblog={load:function(e,t){
     var a=document,l=a.createElement("script"),
         o=a.getElementsByTagName("script")[0];
     return l.type="text/javascript",l.onload=t,l.async=!0,l.src=e,o.parentNode.insertBefore(l,o),l}};
-liveblog.load("${parentIframe}parent-iframe.js?"+parseInt(new Date().getTime()/900000,10),function(){"function"==typeof 
+liveblog.load("${parentIframe}parent-iframe.js?"+parseInt(new Date().getTime()/900000,10),function(){"function"==typeof
 liveblog.loadCallback&&liveblog.loadCallback()});</script>`;
 
         vm.embeds = {
@@ -508,7 +562,6 @@ liveblog.loadCallback&&liveblog.loadCallback()});</script>`;
     });
 
     $scope.isAdmin = blogSecurityService.isAdmin;
-
 
     // check if form is dirty before leaving the page
     const deregisterPreventer = $scope.$on('$locationChangeStart', routeChange);

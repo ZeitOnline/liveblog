@@ -66,6 +66,7 @@ class UndefinedVar(jinja2.Undefined):
         try:
             return super(UndefinedVar, self).__getattribute__(name, *args, **kwargs)
         except Exception:
+            print('Template variable undefined `{}`'.format(self._undefined_name))
             return UndefinedVar()
 
         return None
@@ -127,6 +128,16 @@ class ThemesResource(Resource):
             'default': False
         },
         'options': {
+            'type': 'list',
+            'schema': {
+                'type': 'dict',
+                'mapping': {
+                    'type': 'object',
+                    'enabled': False
+                }
+            }
+        },
+        'styleOptions': {
             'type': 'list',
             'schema': {
                 'type': 'dict',
@@ -518,7 +529,9 @@ class ThemesService(BaseService):
         # Save theme template and jinja2 compiled templates for SEO themes.
         self._save_theme_files(theme)
 
+        is_local_theme = self.is_local_theme(theme_name)
         previous_theme = self.find_one(req=None, name=theme_name)
+
         if previous_theme:
             self._save_theme_settings(theme, previous_theme)
             self.replace(previous_theme['_id'], theme, previous_theme)
@@ -528,13 +541,13 @@ class ThemesService(BaseService):
             else:
                 response = dict(status='unchanged', theme=theme)
         else:
-            self.check_themes_limit()
+            if not is_local_theme:
+                self.check_themes_limit()
+
             self.create([theme])
             response = dict(status='created', theme=theme)
 
-        is_local_theme = self.is_local_theme(theme_name)
         is_temp_upload = self.is_uploaded_theme(theme_name) and self.is_s3_storage_enabled
-
         if not keep_files and not is_local_theme or is_temp_upload:
             for filename in files:
                 os.unlink(filename)

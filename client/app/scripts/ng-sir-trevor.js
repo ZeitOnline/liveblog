@@ -1,4 +1,5 @@
 import angular from 'angular';
+import _ from 'lodash';
 
 export default angular
     .module('SirTrevor', [])
@@ -41,8 +42,8 @@ export default angular
         const directive = {
             template: function(element, attr) {
                 let str = '<textarea class="sir-trevor" name="content"></textarea>';
-                // sir trevor needs a parent `form` tag.
 
+                // sir trevor needs a parent `form` tag.
                 if (!element.parent('form').length) {
                     str = '<form>' + str + '</form>';
                 }
@@ -52,17 +53,25 @@ export default angular
                 editor: '=stModel',
                 onChange: '=stChange',
                 params: '=stParams',
+                debounceOnChange: '=stDebounceChange',
+                debounceTime: '@stDebounceTime',
             },
             link: function(scope, element, attrs) {
                 const opts = angular.copy(options);
 
                 angular.extend(opts, scope.params);
                 opts.el = $(element.find('textarea'));
+
+                // clean older instances if any
+                if (scope.editor) {
+                    scope.editor.destroy();
+                }
+
                 scope.editor = new SirTrevor.Editor(opts);
                 scope.editor.get = function() {
                     const list = [];
-                    // sort blocks by index.
 
+                    // sort blocks by index.
                     scope.editor.blocks.sort((a, b) => a.$el.index() - b.$el.index());
                     angular.forEach(scope.editor.blocks, (block) => {
                         scope.editor.saveBlockStateToStore(block);
@@ -88,14 +97,9 @@ export default angular
 
                 element.on('keyup', scope.onChange);
 
-                // @TODO: investigate how to better `digest` out of $scope  variables.
-                // scope.$watchCollection('editor.blocks', function(blocks) {
-                //     var list = [];
-                //     _.each(blocks, function(block) {
-                //         list.push(scope.editor.get(block));
-                //     });
-                //     scope.model = list;
-                // });
+                const debouncedChange = _.debounce(scope.debounceOnChange, scope.debounceTime);
+
+                element.on('keydown', debouncedChange);
             },
         };
 

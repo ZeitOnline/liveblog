@@ -13,6 +13,7 @@ import _ from 'lodash';
 import sanitizeHtml from 'sanitize-html';
 
 import imageBlock from './image-block';
+import videoBlock, {getYoutubeID} from './video-block';
 import handlePlaceholder from './handle-placeholder';
 import sanitizeConfig from './sanitizer-config';
 
@@ -114,13 +115,31 @@ function cleanupURL(string) {
     return string;
 }
 
+/**
+ * Simple function is intended to escape _ characters from html tag attributes
+ * before passing the content to SirTrevor.toHTML function. SirTrevors screws up underscores
+ * and replace them with <i> tags like if it was markdown
+ *
+ * This is long time known issue. Check https://dev.sourcefabric.org/browse/LBSD-2353
+ * and connected issues.
+ * @param {string} htmlString
+ */
+function escapeUnderscore(htmlString) {
+    // SirTrevor won't match this and then it will replace them with _
+    const tripleBackslashEscape = '\\\_'; // eslint-disable-line
+    const tagAttrs = /(\S+)\s*=\s*([']|["])([\W\w]*?)\2/gm;
+
+    return htmlString
+        .replace(tagAttrs, (match) => match.replace(/_/g, tripleBackslashEscape));
+}
+
 function replaceEmbedWithUrl(string) {
     var m;
 
     // checking if string contains any of the "big four" embeds
     if (generalPattern.test(string)) {
         if ((m = youtubePattern.exec(string)) !== null) {
-            return 'https://www.youtube.com/watch?v=' + m[1];
+            return 'https://www.youtube.com/watch?v=' + getYoutubeID(string);
         } else if ((m = facebookPattern.exec(string)) !== null) {
             return decodeURIComponent(m[1]);
         } else if ((m = instagramPattern.exec(string)) !== null) {
@@ -149,15 +168,18 @@ angular
                 'data-icon-after': 'ADD CONTENT HERE',
             });
         };
+
         // Add toMeta method to all blocks.
         SirTrevor.Block.prototype.toMeta = function() {
             return this.getData();
         };
+
         SirTrevor.Block.prototype.getOptions = function() {
             const instance = SirTrevor.$get().getInstance(this.instanceID);
 
             return instance ? instance.options : null;
         };
+
         SirTrevor.Blocks.Embed = SirTrevor.Block.extend({
             type: 'embed',
             data: {},
@@ -173,12 +195,12 @@ angular
             onBlockRender: function() {
                 var self = this;
 
-                // create and trigger a 'change' event for the $editor which is a contenteditable
                 this.$editor.filter('[contenteditable]').on('focus', function(ev) {
                     const $this = $(this);
 
                     $this.data('before', $this.html());
                 });
+
                 this.$editor.filter('[contenteditable]').on('blur keyup paste input', function(ev) {
                     const $this = $(this);
 
@@ -187,7 +209,9 @@ angular
                         $this.trigger('change');
                     }
                 });
+
                 handlePlaceholder(this.$editor.filter('[contenteditable]'), self.embedPlaceholder);
+
                 // when the link field changes
                 const callServiceAndLoadData = function() {
                     let input = $(this)
@@ -200,12 +224,15 @@ angular
                         return false;
                     }
                     self.getOptions().disableSubmit(false);
+
                     // reset error messages
                     self.resetMessages();
+
                     // start a loader over the block, it will be stopped in the loadData function
                     self.loading();
                     input = replaceEmbedWithUrl(input);
                     input = fixSecureEmbed(input);
+
                     // if the input is an url, use embed services
                     if (isURI(input)) {
                         input = cleanupURL(input);
@@ -340,7 +367,7 @@ angular
                 }
 
                 fixSocial(html, data);
-                // retrieve the final html code
+
                 let htmlToReturn = '';
 
                 htmlToReturn = '<div class="' + cardClass + '">';
@@ -358,7 +385,6 @@ angular
                 self.$('.embed-input')
                     .addClass('hidden')
                     .after(self.renderCard(data));
-                // set somes fields contenteditable
                 ['title', 'description', 'credit'].forEach((fieldName) => {
                     self.$('.' + fieldName + '-preview').attr({
                         contenteditable: true,
@@ -374,7 +400,6 @@ angular
                 } else {
                     this.ready();
                 }
-                // add a link to remove/show the cover
                 const $coverHandler = this.$('.cover-preview-handler');
 
                 if ($coverHandler.length > 0 && !$coverHandler.hasClass('hidden')) {
@@ -420,6 +445,7 @@ angular
                 return this.retrieveData();
             },
         });
+
         SirTrevor.Blocks.Quote = SirTrevor.Block.extend({
             type: 'quote',
             title: function() {
@@ -524,8 +550,12 @@ angular
 
         SirTrevor.Blocks.Image = imageBlock(SirTrevor, config);
 
+        SirTrevor.Blocks.Video = videoBlock(SirTrevor, config);
+
         SirTrevor.Blocks.Text.prototype.loadData = function(data) {
-            this.getTextBlock().html(SirTrevor.toHTML(data.text, this.type));
+            let htmlContent = escapeUnderscore(data.text);
+
+            this.getTextBlock().html(SirTrevor.toHTML(htmlContent, this.type));
         };
 
         SirTrevor.Blocks.Text.prototype.toMeta = function() {
@@ -621,7 +651,9 @@ angular
             icon_name: 'comment',
 
             loadData: function(data) {
-                this.getTextBlock().html(SirTrevor.toHTML(data.text, this.type));
+                let htmlContent = escapeUnderscore(data.text);
+
+                this.getTextBlock().html(SirTrevor.toHTML(htmlContent, this.type));
             },
             isEmpty: function() {
                 return _.isEmpty(this.getData().text);

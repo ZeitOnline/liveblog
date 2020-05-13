@@ -19,8 +19,6 @@ postsService.$inject = [
 ];
 
 export default function postsService(api, $q, userList, session) {
-    var listOfUsers = [];
-
     function filterPosts(filters, postsCriteria) {
         // filters.status
         if (angular.isDefined(filters.status)) {
@@ -57,6 +55,42 @@ export default function postsService(api, $q, userList, session) {
             postsCriteria.source.query.filtered.filter.and.push({term: {sticky: filters.sticky}});
         }
     }
+
+    /**
+     * Using recursiveDeepCopy approach since it's performant than JSON.stringify
+     * and it allows having functions within the cloned object
+     * https://jsperf.com/deep-copy-vs-json-stringify-json-parse/5
+     * TODO: move this outside as can be used somewhere else.
+     */
+    const recursiveDeepCopy = (o) => {
+        let newObj;
+        let i;
+
+        if (moment.isMoment(o)) {
+            return o.clone();
+        }
+
+        if (typeof o !== 'object' || !o)
+            return o;
+
+        // eslint-disable-next-line yoda
+        if ('[object Array]' === Object.prototype.toString.apply(o)) {
+            newObj = [];
+            for (i = 0; i < o.length; i += 1) {
+                newObj[i] = recursiveDeepCopy(o[i]);
+            }
+            return newObj;
+        }
+
+        newObj = {};
+        for (i in o) {
+            if (o.hasOwnProperty(i)) {
+                newObj[i] = recursiveDeepCopy(o[i]);
+            }
+        }
+
+        return newObj;
+    };
 
     /**
      * Fetch a page of posts
@@ -122,27 +156,16 @@ export default function postsService(api, $q, userList, session) {
      * information later (profile_url, name, etc)
      *
      * @param       {Object} obj         Post or item belonging to post
-     * @param       {String} postCreator (optional) - Id of user to look for
+     *
+     * @TODO: remove this in next release as it's all coming from backend
      */
-    function _completeUser(obj, postCreator) {
+    function _completeUser(obj) {
         if (obj.commenter) {
             obj.user = {display_name: obj.commenter};
         } else if (obj.syndicated_creator) {
             obj.user = obj.syndicated_creator;
-        } else {
-            // we pull a set of users from the backend and store it
-            // in a variable. Max results will be 199, if user is not found
-            // then if will hit backend to try to retrieve user from db
-            var userId = postCreator || obj.original_creator;
-            var postUser = listOfUsers.find((x) => x._id === userId);
-
-            if (!postCreator) {
-                userList.getUser(postCreator || obj.original_creator).then((user) => {
-                    obj.user = user;
-                });
-            } else {
-                obj.user = postUser;
-            }
+        } else if (typeof obj.original_creator === 'object') {
+            obj.user = obj.original_creator;
         }
 
         return obj;
@@ -179,7 +202,13 @@ export default function postsService(api, $q, userList, session) {
             });
 
             // let's now complete user for main post
-            _completeUser(post.mainItem.item, post.original_creator);
+            post.mainItem.item.user = post.original_creator;
+
+            if (!post.mainItem.item.user) {
+                let mainItem = recursiveDeepCopy(post.mainItem.item);
+
+                post.mainItem.item.user = _completeUser(mainItem).user;
+            }
 
             resolve(post);
         });
@@ -221,16 +250,6 @@ export default function postsService(api, $q, userList, session) {
     }
 
     function retrievePosts(blogId, postsCriteria) {
-        // preload users to avoid pulling them one by one
-        // to later use them to attach creator data to each post
-        if (listOfUsers.length === 0) {
-            api('users')
-                .getAll()
-                .then((data) => {
-                    listOfUsers = data;
-                });
-        }
-
         return api('blogs/<regex("[a-f0-9]{24}"):blog_id>/posts', {_id: blogId})
             .query(postsCriteria)
             .then(retrieveSyndications)
@@ -311,6 +330,7 @@ export default function postsService(api, $q, userList, session) {
                     post.groups[1].refs.push({residRef: item._id});
                 });
             }
+
             let operation;
 
             if (angular.isDefined(postToUpdate)) {
@@ -341,7 +361,25 @@ export default function postsService(api, $q, userList, session) {
         api('post_flags').remove(flag);
     }
 
-    function setFlagTimeout(post, cb) {
+    function syncRemoveFlag(url, etag) {
+        // NOTE: avoid using Promise as we are triggering this
+        // when unload & onunload window event. So if we use promises
+        // browser will kill the thread before the request is triggered
+        const jq = angular.element;
+
+        jq.ajax({
+            url: url,
+            method: 'DELETE',
+            crossDomain: true,
+            async: false,
+            headers: {
+                Authorization: localStorage.getItem('sess:token'),
+                'If-Match': etag,
+            },
+        });
+    }
+
+    function setFlagTimeout(post, callback) {
         // perhaps not the best place to put this but I needed this
         // to be accessible from diferent directives. If there is another/better way
         // please improve this ;)
@@ -362,7 +400,8 @@ export default function postsService(api, $q, userList, session) {
 
         window[key] = setTimeout(() => {
             post.edit_flag = undefined;
-            cb();
+
+            callback();
 
             // then remove also from backend if user is editing
             if (editFlag.users.indexOf(session.identity) !== -1) {
@@ -378,6 +417,7 @@ export default function postsService(api, $q, userList, session) {
         savePost: savePost,
         flagPost: flagPost,
         removeFlagPost: removeFlagPost,
+        syncRemoveFlag: syncRemoveFlag,
         setFlagTimeout: setFlagTimeout,
         saveDraft: function(blogId, post, items, sticky, highlight) {
             return savePost(

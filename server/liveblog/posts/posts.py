@@ -6,7 +6,7 @@ from flask import current_app as app
 from bson.objectid import ObjectId
 from eve.utils import ParsedRequest
 from superdesk.notification import push_notification
-from superdesk.resource import Resource, build_custom_hateoas
+from superdesk.resource import Resource, build_custom_hateoas, not_analyzed
 from apps.archive import ArchiveVersionsResource
 from apps.archive.archive import ArchiveResource, ArchiveService
 from superdesk.services import BaseService
@@ -20,25 +20,37 @@ from liveblog.common import check_comment_length, get_user
 from settings import EDIT_POST_FLAG_TTL
 from ..blogs.utils import check_limit_and_delete_oldest, get_blog_stats
 from .tasks import update_post_blog_data, update_post_blog_embed
+from .mixins import AuthorsMixin
 
 
 logger = logging.getLogger('superdesk')
 DEFAULT_POSTS_ORDER = [('order', -1), ('firstcreated', -1)]
 
 
+# monkey patch so we can update superdesk core resources in Elastic
+# TODO: figure out if there is a better way to achieve this
+# We need the tags to be not_analyzed to be able to filter by array
+schema_patch = {
+    'tags': {
+        'type': 'list',
+        'default': [],
+        'mapping': not_analyzed
+    }
+}
+
+ArchiveResource.schema.update(schema_patch)
+
+
 def get_publisher():
     publisher = getattr(flask.g, 'user', None)
     if not publisher:
         return None
-    return {k: publisher.get(k, None) for k in ('_created',
-                                                '_etag',
-                                                '_id',
-                                                '_updated',
-                                                'username',
-                                                'display_name',
-                                                'sign_off',
-                                                'byline',
-                                                'email')}
+
+    publisher_keys = (
+        '_created', '_etag', '_id', '_updated', 'username',
+        'display_name', 'sign_off', 'byline', 'email')
+
+    return {k: publisher.get(k, None) for k in publisher_keys}
 
 
 def private_draft_filter():
@@ -78,6 +90,7 @@ class PostsVersionsService(BaseService):
 class PostsResource(ArchiveResource):
     datasource = {
         'source': 'archive',
+        'search_backend': 'elastic',
         'elastic_filter_callback': private_draft_filter,
         'elastic_filter': {'term': {'particular_type': 'post'}},
         'default_sort': DEFAULT_POSTS_ORDER
@@ -136,7 +149,7 @@ class PostsResource(ArchiveResource):
             'type': 'string',
             'nullable': True
         },
-        'repeat_syndication': Resource.rel('repeat_syndication', embeddable=True, required=False, nullable=True)
+        'repeat_syndication': Resource.rel('repeat_syndication', embeddable=True, required=False, nullable=True),
     })
     privileges = {'GET': 'posts', 'POST': 'posts', 'PATCH': 'posts', 'DELETE': 'posts'}
     mongo_indexes = {
@@ -218,8 +231,10 @@ class PostsService(ArchiveService):
         posts = []
         out_service = get_resource_service('syndication_out')
         for doc in docs:
+            blog_id = doc.get('blog')
             post = {}
             post['id'] = doc.get('_id')
+            post['blog'] = blog_id
 
             # Check if post has syndication_in entry.
             post['syndication_in'] = doc.get('syndication_in')
@@ -231,7 +246,6 @@ class PostsService(ArchiveService):
                     post['auto_publish'] = synd_in.get('auto_publish')
 
             posts.append(post)
-            blog_id = doc.get('blog')
             app.blog_cache.invalidate(blog_id)
 
             # Update blog post data and embed for SEO-enabled blogs.
@@ -321,7 +335,8 @@ class PostsService(ArchiveService):
             # Syndication.
             out_service.send_syndication_post(original, action='deleted')
             # Push notification.
-            push_notification('posts', deleted=True, post_id=original.get('_id'))
+            _posts = [{'post_id': original.get('_id'), 'blog': blog_id}]
+            push_notification('posts', deleted=True, posts=_posts)
 
             stats = get_blog_stats(blog_id)
             if stats:
@@ -371,24 +386,6 @@ class PostsService(ArchiveService):
 
         # Send notifications
         push_notification('posts', deleted=True)
-
-
-def add_flags_info(post):
-    # time to get info from editing flags
-    flag = get_resource_service('post_flags').find_one(req=None, postId=post['_id'])
-
-    # let's replace users id with real information
-    if (flag):
-        users = []
-        for userId in flag['users']:
-            users.append(get_resource_service('users').find_one(req=None, _id=userId))
-        flag['users'] = users
-
-        # so this we have _links available for other methods in frontend
-        build_custom_hateoas(PostFlagService.custom_hateoas, flag, location='post_flags')
-        post['edit_flag'] = flag
-
-    return post
 
 
 class PostFlagResource(Resource):
@@ -513,7 +510,7 @@ class BlogPostsResource(Resource):
     privileges = {'GET': 'posts'}
 
 
-class BlogPostsService(ArchiveService):
+class BlogPostsService(ArchiveService, AuthorsMixin):
     custom_hateoas = {'self': {'title': 'Posts', 'href': '/{location}/{_id}'}}
 
     def get(self, req, lookup):
@@ -527,16 +524,75 @@ class BlogPostsService(ArchiveService):
             lookup['blog'] = ObjectId(lookup['blog_id'])
             del lookup['blog_id']
         docs = super().get(req, lookup)
+        related_items = self._related_items_map(docs)
+
         for doc in docs:
             build_custom_hateoas(self.custom_hateoas, doc, location='posts')
             for assoc in self.packageService._get_associations(doc):
-                if assoc.get('residRef'):
-                    item = get_resource_service('archive').find_one(req=None, _id=assoc['residRef'])
-                    assoc['item'] = item
+                ref_id = assoc.get('residRef', None)
+                if ref_id is not None:
+                    assoc['item'] = related_items[ref_id]
+
+            self.extract_author_ids(doc)
+
+        # now that we have authors id, let's hit db once
+        self.generate_authors_map()
+        self.attach_authors(docs)
+
         return docs
 
-    def on_fetched(self, docs):
-        super().on_fetched(docs)
+    def _related_items_map(self, docs):
+        """It receives an array of blogs and we extract the associations' ID
+        then we hit the database just 1 time and return them as dictionary"""
 
-        for doc in docs['_items']:
-            add_flags_info(doc)
+        items_map = {}
+        ids = []
+
+        for doc in docs:
+            for assoc in self.packageService._get_associations(doc):
+                ref_id = assoc.get('residRef', None)
+                if ref_id:
+                    ids.append(ref_id)
+
+        # now let's get this into a form of dictionary
+        for item in get_resource_service('archive').find({'_id': {'$in': ids}}):
+            items_map[item.get('_id')] = item
+
+        return items_map
+
+    def on_fetched(self, blog):
+        super().on_fetched(blog)
+
+        posts_flags_map = self._flags_for_posts(blog['_items'])
+
+        for post in blog['_items']:
+            self._add_flags_info(post, posts_flags_map)
+
+    def _flags_for_posts(self, posts):
+        """
+        Dictionary of {postId: flag} for later usage instead of hitting database
+        """
+        flags_map = {}
+
+        post_ids = [post['_id'] for post in posts]
+        for flag in get_resource_service('post_flags').find({'postId': {'$in': post_ids}}):
+            flags_map[flag.get('postId')] = flag
+
+        return flags_map
+
+    def _add_flags_info(self, post, flags_map):
+        # time to get info from editing flags
+        flag = flags_map.get(post['_id'])
+
+        # let's replace users id with real information
+        if (flag):
+            users = []
+            for userId in flag['users']:
+                users.append(get_resource_service('users').find_one(req=None, _id=userId))
+            flag['users'] = users
+
+            # so this we have _links available for other methods in frontend
+            build_custom_hateoas(PostFlagService.custom_hateoas, flag, location='post_flags')
+            post['edit_flag'] = flag
+
+        return post

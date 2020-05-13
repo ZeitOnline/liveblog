@@ -3,7 +3,6 @@ import 'lb-bootstrap.scss';
 import 'jquery-ui/jquery-ui';
 import 'jquery-jcrop';
 import 'jquery-gridster';
-// import 'moment-timezone';
 import 'bootstrap';
 import 'angular';
 import 'angular-moment';
@@ -31,10 +30,6 @@ import moment from 'moment-timezone';
 
 _.sortByOrder = require('lodash.sortbyorder');
 
-// This is an ugly little hack required by the venerable superdesk.editor to work
-import MediumEditor from 'medium-editor';
-window.MediumEditor = MediumEditor;
-
 import 'superdesk-core/scripts/core/activity';
 import 'superdesk-core/scripts/core/analytics';
 import 'superdesk-core/scripts/core/api';
@@ -46,9 +41,7 @@ import 'superdesk-core/scripts/core/elastic';
 import 'superdesk-core/scripts/core/filters';
 import 'superdesk-core/scripts/core/services';
 import 'superdesk-core/scripts/core/directives';
-import 'superdesk-core/scripts/core/editor2';
 import 'superdesk-core/scripts/core/spellcheck';
-import 'superdesk-core/scripts/core/editor3';
 import 'superdesk-core/scripts/core/features';
 import 'superdesk-core/scripts/core/list';
 import 'superdesk-core/scripts/core/keyboard';
@@ -66,8 +59,6 @@ import 'superdesk-core/scripts/core/loading';
 import 'superdesk-core/scripts/apps/workspace';
 import 'superdesk-core/scripts/apps/dashboard';
 import 'superdesk-core/scripts/apps/users';
-// import 'superdesk-core/scripts/apps/groups';
-// import 'superdesk-core/scripts/apps/products';
 import 'superdesk-core/scripts/apps/publish';
 import 'superdesk-core/scripts/apps/templates';
 import 'superdesk-core/scripts/apps/profiling';
@@ -149,8 +140,6 @@ angular.module('superdesk.apps', [
     'superdesk.apps.archive',
     'superdesk.apps.ingest',
     'superdesk.apps.desks',
-    // 'superdesk.apps.groups',
-    // 'superdesk.apps.products',
     'superdesk.apps.authoring',
     'superdesk.apps.packaging',
     'superdesk.apps.spellcheck',
@@ -160,7 +149,6 @@ angular.module('superdesk.apps', [
     'superdesk.apps.content_filters', // Can't remove
     'superdesk.apps.dictionaries',
     'superdesk.apps.vocabularies',
-    // 'superdesk.apps.searchProviders',
     'superdesk.apps.stream',
     'superdesk.apps.publish', // Can't remove
     'superdesk.apps.templates',
@@ -178,6 +166,7 @@ const liveblogModules = [
     'liveblog.blog',
     'liveblog.themes',
     'liveblog.freetypes',
+    'liveblog.settings',
     'liveblog.advertising',
     'ngMessages',
 ];
@@ -202,10 +191,11 @@ liveblog.constant('moment', moment);
 liveblog.config(['$routeProvider', '$locationProvider', ($routeProvider, $locationProvider) => {
     $locationProvider.hashPrefix('');
     $routeProvider.when('/', {redirectTo: '/liveblog'});
+    $routeProvider.when('/settings', {redirectTo: '/settings/general'});
 }]);
 
-liveblog.run(['$rootScope', '$timeout', 'notify', 'gettext', 'session', '$templateCache',
-    function($rootScope, $timeout, notify, gettext, session, $templateCache) {
+liveblog.run(['$rootScope', '$timeout', 'notify', 'gettext', 'session',
+    function($rootScope, $timeout, notify, gettext, session) {
         var alertTimeout;
 
         $rootScope.$on('disconnected', (event) => {
@@ -227,103 +217,6 @@ liveblog.run(['$rootScope', '$timeout', 'notify', 'gettext', 'session', '$templa
                 }, 100);
             }
         });
-        $templateCache.put(
-            'scripts/core/menu/notifications/views/notifications.html',
-            /**
-             * @TODO: from template loacated `template/core/menu/notifications/views/notifications.html`
-             * wepack `ngtemplate` isn't loading the content.
-             *
-            */
-            `
-<div class="notification-pane" ng-class="{show: flags.notifications}">
-    <div class="header" ng-if="flags.notifications">
-        <figure class="avatar medium">
-            <img sd-user-avatar data-user="currentUser">
-        </figure>
-        <div class="user-info">
-            <span class="name">{{currentUser.display_name }}</span>
-            <span class="displayname">{{currentUser.username }}</span>
-        </div>
-        <div class="actions">
-            <a href="#/profile/" ng-click="flags.notifications = false" translate>Profile</a>
-            <button ng-click="logout()" translate>SIGN OUT</button>
-        </div>
-    </div>
-    <div class="content" ng-if="flags.notifications">
-        <section class="module">
-            <header class="title" translate>Notifications</header>
-            <div class="notification-list">
-                <ul>
-                    <li ng-repeat="notification in notifications._items track by notification._id"
-                        ng-class="{unread: notification._unread}" sd-mark-as-read>
-                        <figure class="avatar">
-                            <img sd-user-avatar data-user="notification.user">
-                        </figure>
-                        <div class="content" ng-if="notification.name == 'notify'">
-                            <time sd-datetime data-date="notification._created"></time>
-                            <p class="text"><b>{{:: notification.user_name }}</b>
-                            <span translate>commented on</span>
-<i><a
-ng-href="#/authoring/{{ notification.item }}?_id={{ notification.item }}&comments={{ notification.data.comment_id }}"
-title="{{ notification.item_slugline }}">
-                                    {{ :: notification.item_slugline }}
-</a></i>
-                            :<br>{{:: notification.data.comment }}</p>
-                        </div>
-                        <div class="content" ng-if="notification.name == 'user:mention'">
-                            <time sd-datetime data-date="notification._created"></time>
-                            <p class="text">
-                                <b>{{:: notification.user_name }}</b>
-                                <span translate>mentioned you</span> <i>
-                                <a title="{{ notification.item_slugline }}" ng-click="openArticle(notification)">
-                                    {{:: notification.item_slugline}}
-                                </a></i>:<br>{{:: notification.data.comment }}</p>
-                        </div>
-                        <div class="content" ng-if="notification.name == 'liveblog:request'">
-                            <time sd-datetime data-date="notification._created"></time>
-                            <p class="text">
-                                <b>{{:: notification.user_name }}</b>
-                                <span translate>request access to </span>
-                                <i>
-<a ng-href="#/liveblog/edit/{{ notification.item }}?panel=editor" title="{{:: notification.data.item_slugline }}">
-{{:: notification.data.item_slugline }}
-</a>
-                                </i>
-                            </p>
-                        </div>
-                        <div class="content" ng-if="notification.name == 'liveblog:add'">
-                            <time sd-datetime data-date="notification._created"></time>
-                            <p class="text">
-                                <b>{{:: notification.user_name }}</b>
-                                <span translate>added you as a member to </span>
-                                <i>
-<a ng-href="#/liveblog/edit/{{ notification.item }}?panel=editor" title="{{:: notification.data.item_slugline }}">
-{{:: notification.data.item_slugline }}
-</a>
-                                </i>
-                            </p>
-                        </div>
-                        <div class="content"
-                            ng-if="notification.name != 'notify' &&
-                                    notification.name != 'user:mention' &&
-                                    notification.name.indexOf('liveblog') == -1"
-                            ng-click="onNotificationClick(notification)">
-                            <time sd-datetime data-date="notification._created"></time>
-                            <p class="text">
-                                <b>{{:: notification.user_name || "System" }}</b>:
-                                <span sd-activity-message data-activity="notification"></span></p>
-                        </div>
-                    </li>
-                    <div class="info" ng-show="notifications._items.length === 0" translate>All good so far.</div>
-                    <div class="info" ng-show="notifications._items == null" translate>Loading...</div>
-                </ul>
-            </div>
-        </section>
-    </div>
-</div>
-
-`
-        );
     }]);
 
 const body = angular.element('body');

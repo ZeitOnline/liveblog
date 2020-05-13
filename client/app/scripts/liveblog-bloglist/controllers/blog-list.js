@@ -1,3 +1,5 @@
+import {ACTIVE_STATE, ARCHIVED_STATE, DELETED_STATE} from './constants';
+
 BlogListController.$inject = [
     '$scope',
     '$location',
@@ -5,13 +7,12 @@ BlogListController.$inject = [
     'api',
     'gettext',
     'upload',
-    'isArchivedFilterSelected',
+    'selectedFilter',
     '$q',
     'blogSecurityService',
     'notify',
     'config',
     'urls',
-    'moment',
     'modal',
     'blogService',
 ];
@@ -23,22 +24,22 @@ export default function BlogListController(
     api,
     gettext,
     upload,
-    isArchivedFilterSelected,
+    selectedFilter,
     $q,
     blogSecurityService,
     notify,
     config,
     urls,
-    moment,
     modal,
     blogService
 ) {
     $scope.maxResults = 25;
     $scope.states = [
-        {name: 'active', code: 'open', text: gettext('Active blogs')},
-        {name: 'archived', code: 'closed', text: gettext('Archived blogs')},
+        ACTIVE_STATE,
+        ARCHIVED_STATE,
+        DELETED_STATE,
     ];
-    $scope.activeState = isArchivedFilterSelected ? $scope.states[1] : $scope.states[0];
+    $scope.activeState = $scope.states.find((x) => x.name === selectedFilter);
     $scope.creationStep = 'Details';
     $scope.requestAccessMessage = gettext('Click to request access');
     $scope.blogMembers = [];
@@ -102,8 +103,9 @@ export default function BlogListController(
         });
     }
 
-    $scope.askRemoveBlog = function() {
-        modal.confirm(gettext('Are you sure you want to delete the blog(s)?'))
+    $scope.askDestroyBlog = function() {
+        modal.confirm(gettext(`ATTENTION: If you proceed with this action the blog(s) will be removed permanetly.
+                This cannot be undone later. Do you want to remove the blog(s)?`))
             .then(() => {
                 var selectedBlogs = [];
 
@@ -114,6 +116,15 @@ export default function BlogListController(
                 });
 
                 $scope.blogs._items = $scope.blogs._items.filter((el) => selectedBlogs.indexOf(el) < 0);
+            });
+    };
+
+    $scope.askRemoveBlog = function() {
+        modal.confirm(`The blog(s) will be in <b>Deleted Blogs</b> tab during ${config.daysRemoveDeletedBlogs}
+            day(s), after that period will be removed permanently.<br /><br />
+            Are you sure you want to delete the blog(s)?`)
+            .then(() => {
+                $scope.bulkAction(DELETED_STATE);
             });
     };
 
@@ -141,7 +152,12 @@ export default function BlogListController(
         $scope.bulkActions = 0;
     };
 
-    $scope.bulkAction = function(activeState) {
+    $scope.preBulkAction = (activeState) => {
+        $scope.bulkAction(
+            activeState.name === ACTIVE_STATE.name ? ARCHIVED_STATE : ACTIVE_STATE);
+    };
+
+    $scope.bulkAction = function(nextState) {
         let selectedBlogs = [];
 
         angular.forEach($scope.blogs._items, (blog) => {
@@ -150,7 +166,7 @@ export default function BlogListController(
                 const deferred = $q.defer();
 
                 const changedBlog = {
-                    blog_status: activeState.name == 'active' ? 'closed' : 'open',
+                    blog_status: nextState.code,
                 };
 
                 let newBlog = angular.copy(blog);
@@ -164,10 +180,13 @@ export default function BlogListController(
                 delete newBlog.selected;
                 delete newBlog.firstcreated;
                 newBlog.original_creator = blog.original_creator._id;
+
                 blogService.update(blog, newBlog).then((blog) => {
                     notify.pop();
-                    if (blog.blog_status == 'closed') {
+                    if (blog.blog_status === ARCHIVED_STATE.code) {
                         notify.info(gettext('Blog(s) moved to archived'));
+                    } else if (blog.blog_status === DELETED_STATE.code) {
+                        notify.info(gettext('Blog(s) will be deleted'));
                     } else {
                         notify.info(gettext('Blog(s) is actived now'));
                     }
@@ -271,7 +290,9 @@ export default function BlogListController(
     };
 
     $scope.edit = function(blog) {
-        $location.path('/liveblog/edit/' + blog._id);
+        let blogId = typeof blog === 'object' ? blog._id : blog;
+
+        $location.path('/liveblog/edit/' + blogId);
     };
 
     $scope.openAccessRequest = function(blog) {

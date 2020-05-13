@@ -54,8 +54,7 @@ export default function imageBlock(SirTrevor, config) {
                 class: 'alert alert-error',
                 role: 'alert',
                 style: 'display: none',
-            })
-                .html(window.gettext('Max. amount of 300 characters is reached')));
+            }).html(window.gettext('Max. amount of 300 characters is reached')));
 
             this.$editor.append($('<div>', {
                 name: 'credit',
@@ -104,7 +103,7 @@ export default function imageBlock(SirTrevor, config) {
 
             // assert we have an uploader function in options
             if (typeof this.getOptions().uploader !== 'function') {
-                throw 'Image block need an `uploader` function in options.';
+                throw new Error('Image block need an `uploader` function in options.');
             }
             // setup the upload button
             this.$inputs.find('button').bind('click', (ev) => {

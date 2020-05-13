@@ -16,7 +16,20 @@ import arrow
 from superdesk.default_settings import CORE_APPS as core_apps
 from celery.schedules import crontab
 
-CORE_APPS = [app for app in core_apps if app != 'apps.auth.db']
+# these apps below are not used in Liveblog and because of that
+# they produce some errors given their missing configurations
+EXCLUDED_APPS = [
+    'apps.archived',
+    'apps.auth.db',  # this is replace with local one in liveblog
+    'content_api.publish',
+    'content_api.items',
+    'content_api.tokens',
+    'content_api.items_versions',
+    'content_api.api_audit',
+    'content_api.search'
+]
+
+CORE_APPS = [app for app in core_apps if app not in EXCLUDED_APPS]
 CORE_APPS.append('liveblog.auth')
 
 
@@ -126,8 +139,16 @@ CELERYBEAT_SCHEDULE = {
     'session:gc': {
         'task': 'apps.auth.session_purge',
         'schedule': crontab(minute=20)
+    },
+    'blogs:delete': {
+        'task': 'liveblog.blogs.tasks.remove_deleted_blogs',
+        'schedule': crontab(hour='*/1')  # run every hour
     }
 }
+
+# trying to fix stuff
+CELERY_BEAT_SCHEDULE_FILENAME = CELERYBEAT_SCHEDULE_FILENAME
+CELERY_BEAT_SCHEDULE = CELERYBEAT_SCHEDULE
 
 SENTRY_DSN = env('SENTRY_DSN')
 SENTRY_INCLUDE_PATHS = ['superdesk']
@@ -154,19 +175,20 @@ INSTALLED_APPS = [
     'apps.archive_broadcast',
     'apps.content_types',
 
+    'liveblog.core',
     'liveblog.prepopulate',
     'liveblog.blogs',
     'liveblog.posts',
     'liveblog.items',
     'liveblog.languages',
     'liveblog.themes',
-    'liveblog.global_preferences',
     'liveblog.client_modules',
     'liveblog.syndication',
     'liveblog.freetypes',
     'liveblog.marketplace',
     'liveblog.analytics',
     'liveblog.advertisements',
+    'liveblog.video_upload',
 ]
 
 RESOURCE_METHODS = ['GET', 'POST']
@@ -322,8 +344,7 @@ SUBSCRIPTION_LEVEL_NETWORK = 'network'
 SUBSCRIPTION_LEVEL = env('SUBSCRIPTION_LEVEL', SUBSCRIPTION_LEVEL_NETWORK)
 SUBSCRIPTION_MAX_ACTIVE_BLOGS = {SUBSCRIPTION_LEVEL_SOLO: 1, SUBSCRIPTION_LEVEL_TEAM: 3}
 SUBSCRIPTION_MAX_BLOG_MEMBERS = {SUBSCRIPTION_LEVEL_SOLO: 2, SUBSCRIPTION_LEVEL_TEAM: 4}
-# TODO: fix before release
-SUBSCRIPTION_MAX_THEMES = {SUBSCRIPTION_LEVEL_SOLO: 1, SUBSCRIPTION_LEVEL_TEAM: 6, SUBSCRIPTION_LEVEL_NETWORK: 6}
+SUBSCRIPTION_MAX_THEMES = {SUBSCRIPTION_LEVEL_SOLO: 1, SUBSCRIPTION_LEVEL_TEAM: 6}
 ACCESS_SUBSCRIPTIONS_MOBILE = ['solo-mobile', 'team', 'network']
 
 # Settings to NO_TAKES for PACKAGES in ARCHIVE
@@ -344,5 +365,27 @@ COMPILED_TEMPLATES_PATH = env('COMPILED_TEMPLATES_PATH', os.path.join(ABS_PATH, 
 DEFAULT_THEME_DATE_FORMAT = env('DEFAULT_THEME_DATE_FORMAT', 'D. MMMM YYYY HH:mm')
 DEFAULT_THEME_TIMEZONE = env('DEFAULT_THEME_TIMEZONE', arrow.now().format('ZZZ'))
 
-# TTL for editing post flag (seconds). Default: 5 minutes
-EDIT_POST_FLAG_TTL = int(env('EDIT_POST_FLAG_TTL', 5 * 60))
+# TTL for editing post flag (seconds). Default: 5 hours
+EDIT_POST_FLAG_TTL = int(env('EDIT_POST_FLAG_TTL', 5 * 60 * 60))
+
+# list of URLs where the hooks would be trigger too. POST only for now
+# This should be comma separated string like: 'example.com, domain.com'
+TRIGGER_HOOK_URLS = env('TRIGGER_HOOK_URLS', [])
+
+# will add a watermark to the live embed timeline with liveblog logo
+ACTIVATE_WATERMARK = env('ACTIVATE_WATERMARK', False)
+
+# numbers of days to remove blogs after marked for deletion
+DAYS_REMOVE_DELETED_BLOGS = int(env('DAYS_REMOVE_DELETED_BLOGS', 3))
+
+# using Flask-Cache. Using `simple` as default for simple or local environments
+# See https://flask-caching.readthedocs.io/en/latest/#configuring-flask-caching for more info
+LIVEBLOG_CACHE_TYPE = env('LIVEBLOG_CACHE_TYPE', 'simple')
+
+# used if LIVEBLOG_CACHE_TYPE='redis' otherwise is ignored
+LIVEBLOG_CACHE_REDIS_URL = env('LIVEBLOG_CACHE_REDIS_URL', 'redis://localhost:6379/0')
+
+# original_creator in posts and items used to be a string. This has been changed to avoid extra api hits
+# to complete author information. Next setting is to enable a workaround to behave like before to avoid
+# breaking the Liveblog Reporter app
+MOBILE_APP_WORKAROUND = env('MOBILE_APP_WORKAROUND', False)
