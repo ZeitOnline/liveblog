@@ -1,7 +1,6 @@
 'use strict';
 
 const gulp = require('gulp');
-const browserify = require('browserify');
 const plugins = require('gulp-load-plugins')();
 const del = require('del');
 const path = require('path');
@@ -23,7 +22,7 @@ const CWD = process.cwd();
 // Command-line and default theme options from theme.json.
 let theme = {};
 const loadThemeJSON = () => {
-  theme = require(path.resolve(`${CWD}/theme.json`));
+    theme = require(path.resolve(`${CWD}/theme.json`));
 };
 loadThemeJSON();
 
@@ -167,7 +166,6 @@ gulp.task('lint', () =>
   .pipe(plugins.eslint.format())
   .pipe(plugins.eslint.failAfterError())
 );
-
 
 gulp.task('precomp-parent-templates', precompileParentTemplates(theme, nunjucksEnv));
 

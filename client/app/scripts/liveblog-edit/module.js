@@ -18,6 +18,7 @@ import analiticsTpl from 'scripts/liveblog-analytics/views/view-analytics.ng1';
 
 import BlogEditController from './controllers/blog-edit.js';
 import BlogSettingsController from './controllers/blog-settings.js';
+import './components/inactivity.modal';
 
 /**
  * Resolve a blog by route id and redirect to /liveblog if such blog does not exist
@@ -34,28 +35,31 @@ function BlogResolver(api, $route, $location, notify, gettext, blogService) {
         });
 }
 
-const app = angular.module('liveblog.edit', [
-    'SirTrevor',
-    'SirTrevorBlocks',
-    'angular-embed',
-    'angular-embed.handlers',
-    'ngRoute',
-    'superdesk.core.services.modal',
-    'superdesk.core.upload',
-    'liveblog.pages-manager',
-    'lrInfiniteScroll',
-    'liveblog.security',
-    'liveblog.freetypes',
-])
+const app = angular.module('liveblog.edit',
+    [
+        'SirTrevor',
+        'SirTrevorBlocks',
+        'angular-embed',
+        'angular-embed.handlers',
+        'ngRoute',
+        'superdesk.core.services.modal',
+        'superdesk.core.upload',
+        'liveblog.pages-manager',
+        'lrInfiniteScroll',
+        'liveblog.security',
+        'liveblog.freetypes',
+        'liveblog.edit.components.inactivityModal',
+    ])
     .config(['superdeskProvider', function(superdesk) {
-        superdesk.activity('/liveblog/edit/:_id', {
-            label: gettext('Blog Editor'),
-            auth: true,
-            controller: BlogEditController,
-            controllerAs: 'blogEdit',
-            templateUrl: mainTpl,
-            resolve: {blog: BlogResolver},
-        })
+        superdesk
+            .activity('/liveblog/edit/:_id', {
+                label: gettext('Blog Editor'),
+                auth: true,
+                controller: BlogEditController,
+                controllerAs: 'blogEdit',
+                templateUrl: mainTpl,
+                resolve: {blog: BlogResolver},
+            })
             .activity('/liveblog/settings/:_id', {
                 label: gettext('Blog Settings'),
                 auth: true,
@@ -96,7 +100,6 @@ const app = angular.module('liveblog.edit', [
             type: 'http',
             backend: {rel: 'archive'},
         });
-        // @TODO: remove this when theme at blog level.
         apiProvider.api('global_preferences', {
             type: 'http',
             backend: {rel: 'global_preferences'},
@@ -104,6 +107,10 @@ const app = angular.module('liveblog.edit', [
         apiProvider.api('themes', {
             type: 'http',
             backend: {rel: 'themes'},
+        });
+        apiProvider.api('consumers', {
+            type: 'http',
+            backend: {rel: 'consumers'},
         });
     }])
     .config(['SirTrevorOptionsProvider', 'SirTrevorProvider', function(SirTrevorOptions, SirTrevorParam) {
@@ -118,7 +125,6 @@ const app = angular.module('liveblog.edit', [
             setTimeout(() => {
                 if (editorOptions.isEditorClean()) {
                     editorOptions.disableSubmit(true);
-                    editorOptions.cleanUpFlag();
                 }
             }, 500);
         };
@@ -134,8 +140,8 @@ const app = angular.module('liveblog.edit', [
         SirTrevorOptions.$extend({
             onEditorRender: function() {
                 const self = this;
-                // when a new block is added, remove empty blocks
 
+                // when a new block is added, remove empty blocks
                 function removeEmptyBlockExceptTheBlock(newBlock) {
                     _.each(self.blocks, (block) => {
                         if (block !== newBlock && block.isEmpty()) {
@@ -146,7 +152,7 @@ const app = angular.module('liveblog.edit', [
                 SirTrevor.EventBus.on('block:create:existing', removeEmptyBlockExceptTheBlock);
                 SirTrevor.EventBus.on('block:create:new', removeEmptyBlockExceptTheBlock);
             },
-            blockTypes: ['Text', 'Image', 'Embed', 'Quote', 'Comment'],
+            blockTypes: ['Text', 'Image', 'Embed', 'Quote', 'Comment', 'Video'],
             // render a default block when the editor is loaded
             defaultType: 'Text',
             transform: {
@@ -181,7 +187,6 @@ const app = angular.module('liveblog.edit', [
      * @param {Datetime} date iso format datetime
      * @return {String} relative time
      */
-
     .filter('reldateAutoUpdate', ['$interval', function reldateAutorUpdateFactory($interval) {
         // trigger digest every 60 seconds
         $interval(() => true, 60000);
@@ -200,6 +205,9 @@ const app = angular.module('liveblog.edit', [
             }
             return match;
         });
+    })
+    .filter('varname', () => function(text = '') {
+        return text.toLowerCase().replace(' ', '_');
     })
     .factory('instagramService', ['$timeout', function($timeout) {
         const insta = {};
@@ -245,4 +253,3 @@ const app = angular.module('liveblog.edit', [
     ]);
 
 export default app;
-// });

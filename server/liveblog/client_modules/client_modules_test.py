@@ -4,6 +4,7 @@ import liveblog.client_modules as client_modules
 import liveblog.blogs as blogs
 import superdesk.users as users_app
 import liveblog.items as items_app
+from flask_cache import Cache
 from liveblog.blogs.blog import Blog
 from superdesk.tests import TestCase
 from bson import ObjectId
@@ -40,6 +41,7 @@ class ClientModuleTestCase(TestCase):
             client_modules.init_app(self.app)
             self.app.register_blueprint(blog_posts_blueprint)
             self.client = self.app.test_client()
+            self.app.cache = Cache(self.app, config={'CACHE_TYPE': 'simple'})
 
         self.client_item_service = get_resource_service('client_items')
         self.client_comment_service = get_resource_service('client_comments')
@@ -472,11 +474,18 @@ class ClientModuleTestCase(TestCase):
                 req=None, client_blog=ObjectId("5ab90249fd16ad1752b39b74"))
             self.assertIsNotNone(response, True)
 
-    def test_add_post_info(self):
-        doc = self.blog_post_service.add_post_info(self.blog_posts[0])
+    def test_post_type_and_author(self):
+        doc = self.blog_post_service.extract_author_ids(self.blog_posts[0])
+        self.blog_post_service.calculate_post_type(self.blog_posts[0])
+
+        # TODO: split this test in two
+        self.blog_post_service.generate_authors_map()
+        self.blog_post_service.attach_authors([doc])
+
         # test method added original creator info
         original_creator = doc.get('original_creator')
         self.assertIsNotNone(original_creator, True)
+
         # test original creator ids
         original_creator_id = self.blog_posts[0].get('original_creator').get('_id')
         self.assertEqual(original_creator.get('_id'), original_creator_id)
