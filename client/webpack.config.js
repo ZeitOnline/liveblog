@@ -1,6 +1,9 @@
+/* eslint-disable */
+
 const path = require('path');
 const webpack = require('webpack');
 const lodash = require('lodash');
+const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 
 // makeConfig creates a new configuration file based on the passed options.
 module.exports = function makeConfig(grunt) {
@@ -30,10 +33,6 @@ module.exports = function makeConfig(grunt) {
         return !validModules.some((app) => p.indexOf(app) > -1);
     };
 
-    // isEmbedded will be true when the app is embedded into the main repo as a
-    // node module.
-    const isEmbedded = require('fs').existsSync('./node_modules/superdesk-core');
-
     return {
         entry: {
             app: 'app/scripts/index.js'
@@ -52,12 +51,15 @@ module.exports = function makeConfig(grunt) {
                 jQuery: 'jquery',
                 'window.jQuery': 'jquery',
                 moment: 'moment',
-                // MediumEditor needs to be globally available, because
-                // its plugins will not be able to find it otherwise.
-                MediumEditor: 'medium-editor'
             }),
             new webpack.DefinePlugin({
                 __SUPERDESK_CONFIG__: JSON.stringify(sdConfig)
+            }),
+
+            // Using TS transpileOnly mode to speed up things and using this plugin
+            // for type checking. https://github.com/Realytics/fork-ts-checker-webpack-plugin
+            new ForkTsCheckerWebpackPlugin({
+                async: false
             })
         ],
 
@@ -80,35 +82,31 @@ module.exports = function makeConfig(grunt) {
                 'external-apps': path.join(process.cwd(), 'dist', 'app-importer.generated.js'),
                 i18n: path.join(process.cwd(), 'dist', 'locale.generated.js'),
                 // ensure that react is loaded only once (3rd party apps can load more...)
-                react: path.resolve('./node_modules/react')
+                react: path.resolve('./node_modules/react'),
+                jquery: path.resolve('./node_modules/jquery')
 
             },
-            extensions: ['.js', '.jsx']
+            extensions: ['.js', '.jsx', '.ts', '.tsx'],
         },
 
         module: {
             rules: [
                 {
-                    enforce: 'pre',
-                    test: /\.jsx?$/,
-                    loader: 'eslint-loader',
-                    // superdesk apps handle their own linter
-                    exclude: (p) => p.indexOf('node_modules') !== -1 || sdConfig.apps && sdConfig.apps.some(
-                        (app) => p.indexOf(app) > -1
-                    ),
+                    test: /\.(ts|tsx|js|jsx)$/,
+                    exclude: shouldExclude,
+                    loader: 'ts-loader',
                     options: {
-                        configFile: './.eslintrc.js',
-                        ignorePath: './.eslintignore'
+                        transpileOnly: true,
                     }
                 },
                 {
-                    test: /\.jsx?$/,
-                    exclude: shouldExclude,
-                    loader: 'babel-loader',
+                    enforce: 'pre',
+                    test: /\.(ts|tsx|js|jsx)$/,
+                    loader: 'eslint-loader',
+                    exclude: /node_modules/,
                     options: {
-                        cacheDirectory: true,
-                        presets: ['es2015', 'react'],
-                        plugins: ['transform-object-rest-spread']
+                        configFile: './.eslintrc.js',
+                        ignorePath: './.eslintignore'
                     }
                 },
                 {
@@ -166,7 +164,7 @@ function getDefaults(grunt) {
 
     return Object.assign(
         {
-        // application version
+            // application version
             version: version || grunt.file.readJSON(path.join(__dirname, 'package.json')).version,
 
             // iframely settings
@@ -233,24 +231,24 @@ const configApp = (grunt) => ({
     // if environment name is not set
     isTestEnvironment: !!grunt.option('environmentName') || !!process.env.SUPERDESK_ENVIRONMENT,
 
-        debug: grunt.option('debug-mode') || false,
-        embedly: {
-            key: grunt.option('embedly-key') || process.env.EMBEDLY_KEY || ''
-        },
-        facebookAppId: grunt.option('facebook-appid') || process.env.FACEBOOK_APP_ID || '',
-        syndication: process.env.SYNDICATION || false,
-        marketplace: process.env.MARKETPLACE || false,
-        themeCreationRestrictions: {team: 5},
-        excludedTheme: 'angular',
-        assignableUsers: {
-            solo: 2,
-            team: 4
-        },
-        subscriptionLevel: process.env.SUBSCRIPTION_LEVEL || '',
-        blogCreationRestrictions: {
-            solo: 1,
-            team: 3
-        },
+    debug: grunt.option('debug-mode') || false,
+    embedly: {
+        key: grunt.option('embedly-key') || process.env.EMBEDLY_KEY || ''
+    },
+    facebookAppId: grunt.option('facebook-appid') || process.env.FACEBOOK_APP_ID || '',
+    syndication: process.env.SYNDICATION || false,
+    marketplace: process.env.MARKETPLACE || false,
+    themeCreationRestrictions: {team: 5},
+    excludedTheme: 'angular',
+    assignableUsers: {
+        solo: 2,
+        team: 4
+    },
+    subscriptionLevel: process.env.SUBSCRIPTION_LEVEL || '',
+    blogCreationRestrictions: {
+        solo: 1,
+        team: 3
+    },
 
     // override language translations
     langOverride: {},
@@ -308,6 +306,8 @@ const configLiveblog = (grunt) => ({
         solo: 1,
         team: 3
     },
+
+    daysRemoveDeletedBlogs: process.env.DAYS_REMOVE_DELETED_BLOGS || 3,
 
     maxContentLength: process.env.MAX_CONTENT_LENGTH || 8 * 1024 * 1024,
     // You might think this empty object is useless.

@@ -1,7 +1,6 @@
 'use strict';
 
 const gulp = require('gulp');
-const browserify = require('browserify');
 const plugins = require('gulp-load-plugins')();
 const del = require('del');
 const path = require('path');
@@ -23,7 +22,7 @@ const CWD = process.cwd();
 // Command-line and default theme options from theme.json.
 let theme = {};
 const loadThemeJSON = () => {
-  theme = require(path.resolve(`${CWD}/theme.json`));
+    theme = require(path.resolve(`${CWD}/theme.json`));
 };
 loadThemeJSON();
 
@@ -168,7 +167,6 @@ gulp.task('lint', () =>
   .pipe(plugins.eslint.failAfterError())
 );
 
-
 gulp.task('precomp-parent-templates', precompileParentTemplates(theme, nunjucksEnv));
 
 gulp.task('precomp-theme-templates', precompileThemeTemplates(theme, nunjucksEnv));
@@ -184,7 +182,8 @@ gulp.task('less', ['clean-css'], compileLess(theme, inputPath));
 gulp.task('amp-validate', [], ampValidate);
 
 // Inject API response into template for dev/test purposes.
-gulp.task('index-inject', ['less', 'bundlejs'], indexInject(theme, apiResponse, nunjucksEnv, inputPath));
+const extraParams = {apiHost, protocol, blogId};
+gulp.task('index-inject', ['less', 'bundlejs'], indexInject(theme, apiResponse, nunjucksEnv, inputPath, extraParams));
 
 // Inject jinja/nunjucks template for production use.
 gulp.task('template-inject', ['less', 'bundlejs'], templateInject(theme, inputPath));

@@ -13,6 +13,7 @@ from superdesk import get_resource_service
 from superdesk.celery_app import celery
 from superdesk.errors import SuperdeskApiError
 from superdesk.notification import push_notification
+from superdesk.utc import utcnow
 
 from .app_settings import (BLOGLIST_ASSETS, BLOGSLIST_ASSETS_DIR,
                            BLOGSLIST_DIRECTORY, CONTENT_TYPES)
@@ -235,9 +236,8 @@ def publish_bloglist_embed_on_s3():
         logger.warning('Blog list embed publishing is disabled.')
         return
 
-    if type(app.media).__name__ is not 'AmazonMediaStorage':
-        pass
-    else:
+    # TODO: check how it should be if there is no AWS S3
+    if type(app.media).__name__ == 'AmazonMediaStorage':
         assets = copy.deepcopy(BLOGLIST_ASSETS)
 
         # Publish version file to get the asset_root.
@@ -277,3 +277,43 @@ def publish_bloglist_embed_on_s3():
 
         publish_bloglist_assets('scripts')
         publish_bloglist_assets('styles')
+
+
+@celery.task
+def post_auto_output_creation(output_data):
+    """
+    Dummy task to trigger the automatic creation of
+    output channel. The reason of this task is to avoid race
+    condition between the blog creation and output creation
+    """
+
+    get_resource_service('outputs').post(output_data)
+
+
+@celery.task
+def remove_deleted_blogs():
+    """
+    Simply find what blogs has been marked with blog_status "deleted"
+    and it will remove them (and the embeds) not before 3 days
+    """
+
+    logger.info('Checking for blogs marked for deletion')
+
+    blog_service = get_resource_service('blogs')
+    archive_service = get_resource_service('archive')
+
+    for blog in blog_service.find({'blog_status': 'deleted'}):
+        if blog['delete_not_before'] <= utcnow():
+            logger.info('Blog "{}" with id "{}" removed as was marked for deletion'.format(blog['title'], blog['_id']))
+
+            blog_id = blog['_id']
+            try:
+                blog_service.on_delete(blog)
+                blog_service.delete(lookup={'_id': blog_id})
+                archive_service.delete(lookup={'blog': ObjectId(blog_id)})
+            except SuperdeskApiError as err:
+                # NOTE: for now we are only skipping the error when the blog
+                # is syndicated. We don't catch other issues because we need to
+                # know what is happening for those cases. For this specific one it's
+                # ok as it doesn't compromise any functionality
+                logger.info('There was a problem removing the blog. {}'.format(err))

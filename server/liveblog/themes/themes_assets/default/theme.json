@@ -1,7 +1,7 @@
 {
     "label": "Liveblog 3 Default SEO Theme",
     "name": "default",
-    "version": "4.0.0-beta.5",
+    "version": "3.6.0",
     "asyncTheme": true,
     "seoTheme": true,
     "author": "Sourcefabric <contact@sourcefabric.org>",
@@ -17,10 +17,10 @@
         "url" : "git@github.com:liveblog/liveblog-default-theme"
     },
     "license": "AGPL-3.0",
-    "devStyles": ["dist/default-2afdbfcb68.css"],
-    "devScripts": ["dist/default-32a04b122b.js"],
-    "styles": ["dist/default-2afdbfcb68.css"],
-    "scripts": ["dist/default-32a04b122b.js"],
+    "devStyles": ["dist/default-9dfe3a67e9.css"],
+    "devScripts": ["dist/default-96ee44392a.js"],
+    "styles": ["dist/default-9dfe3a67e9.css"],
+    "scripts": ["dist/default-96ee44392a.js"],
     "options": [
         {
             "name": "language",
@@ -36,7 +36,7 @@
                     "label": "Finnish"
                 },
                 {
-                    "value": "se",
+                    "value": "sv",
                     "label": "Swedish"
                 },
                 {
@@ -70,6 +70,14 @@
                 {
                     "value": "sr-cy",
                     "label": "Српски"
+                },
+                {
+                    "value": "es",
+                    "label": "Español"
+                },
+                {
+                    "value": "pt",
+                    "label": "Português"
                 }
             ],
             "default": "en"
@@ -404,6 +412,73 @@
             "type": "checkbox",
             "default": true,
             "help": "Turn off to prompt user to load updates"
+        },
+        {
+            "name": "enableGdprConsent",
+            "label": "Enable GDPR Consent",
+            "type": "checkbox",
+            "default": false,
+            "help": "If users will see a placeholder on embeds until consent is given"
+        },
+        {
+            "name": "gdprConsentText",
+            "label": "GDPR Consent Placeholder Text",
+            "type": "text",
+            "dependsOn": {
+                "enableGdprConsent": true
+            },
+            "default": "Please click <b>Activate</b> to see the social media posts. <br />Learn more about our data protection policy on this <a target='_blank' href='https://liveblog.pro/en/termsofuse/'>page</a><br>",
+            "help": "This text will be shown in the GDPR placeholder"
+        },
+        {
+            "name": "gdprConsentDomains",
+            "label": "Embed from Domains Requiring Consent",
+            "type": "text",
+            "dependsOn": {
+                "enableGdprConsent": true
+            },
+            "default": "twitter.com, facebook.com, instagram.com, youtube.com",
+            "help": "Domains separated by comma that will require user's consent to display embeds"
+        }
+    ],
+    "styleOptions": [
+        {
+            "label": "General",
+            "name": "general",
+            "cssSelector": "div.lb-timeline",
+            "columns": 3,
+            "options": [
+                {
+                    "label": "Blog Margin",
+                    "property": "margin",
+                    "type": "text",
+                    "placeholder": "px or %"
+                },
+                {
+                    "label": "Blog Padding",
+                    "property": "padding",
+                    "type": "text",
+                    "placeholder": "px or %"
+                },
+                {
+                    "label": "Blog Max. Width",
+                    "property": "max-width",
+                    "type": "text",
+                    "placeholder": "px or %"
+                },
+                {
+                    "label": "Background",
+                    "property": "background",
+                    "type": "colorpicker",
+                    "default": "#fff"
+                },
+                {
+                    "label": "Link Color",
+                    "property": "colorpicker",
+                    "type": "text",
+                    "tagName": "a"
+                }
+            ]
         }
     ],
     "i18n": {
@@ -434,8 +509,9 @@
           "Show highlighted post only": "Zobraz jen zvýrazněné příspěvky",
           "Sort by:": "Řazení:",
           "Updated": "Aktualizace",
-          "Your comment was sent for approval": "Váš text byl úspěšně odeslán Čeká na schválení",
-          "credit:": " autor:"
+          "Your comment is being reviewed and will be published as soon as it's approved": "Váš komentář se kontroluje a bude publikován, jakmile bude schválen",
+          "credit:": " autor:",
+          "Activate": "Aktivovat"
         }, "de": {
           "Highlights": "Highlights",
           "Comment by": "Kommentar von",
@@ -465,8 +541,9 @@
           "Show highlighted post only": "Anzeigen hervorgehoben Beitrag ist nur",
           "Sort by:": "Ordnen nach",
           "Updated": "Aktualisiert am",
-          "Your comment was sent for approval": "Ihr Kommentar wartet auf Freischaltung",
-          "credit:": "Bild:"
+          "Your comment is being reviewed and will be published as soon as it's approved": "Ihr Kommentar wird überprüft und veröffentlicht, sobald er genehmigt wurde",
+          "credit:": "Bild:",
+          "Activate": "Aktivieren"
         }, "fi": {
           "Highlights": "Kohokohtia",
           "Comment by": "Comment by",
@@ -496,8 +573,9 @@
           "Show highlighted post only": "Näytä vain korostettu julkaisu",
           "Sort by:": "Järjestä:",
           "Updated": "Päivitetty",
-          "Your comment was sent for approval": "Kommenttisi lähetettiin hyväksyttäväksi",
-          "credit:": "©"
+          "Your comment is being reviewed and will be published as soon as it's approved": "Kommenttisi tarkistetaan ja julkaistaan heti, kun se on hyväksytty",
+          "credit:": "©",
+          "Activate": "Aktivoida"
         }, "fr": {
           "Highlights": "Messages en surbrillance",
           "Comment by": "Commentaire de",
@@ -527,8 +605,9 @@
           "Show highlighted post only": "Afficher uniquement les messages en surbrillance",
           "Sort by:": "Trier par:",
           "Updated": "Mise à jour",
-          "Your comment was sent for approval": "Votre commentaire a été envoyé et est en attente de validation",
-          "credit:": "crédit:"
+          "Your comment is being reviewed and will be published as soon as it's approved": "Votre commentaire est en cours de révision et sera publié dès qu'il aura été approuvé",
+          "credit:": "crédit:",
+          "Activate": "Activer"
         }, "nl": {
           "Highlights": "Highlights",
           "Comment by": "Commentaar door",
@@ -555,8 +634,9 @@
           "See new updates": "Bekijk nieuwe berichten",
           "Send": "Verzenden",
           "Sort by:": "Sorteer:",
-          "Your comment was sent for approval": "Uw reactie is ontvangen ter beoordeling",
-          "credit:": "credit:"
+          "Your comment is being reviewed and will be published as soon as it's approved": "Uw opmerking wordt beoordeeld en wordt gepubliceerd zodra deze is goedgekeurd",
+          "credit:": "credit:",
+          "Activate": "Activeren"
         }, "no": {
           "Highlights": "Høydepunkter",
           "Comment by": "Kommentar av",
@@ -586,8 +666,9 @@
           "Show highlighted post only": "Vis bare høydepunkter",
           "Sort by:": "Sortér etter:",
           "Updated": "Oppdatert",
-          "Your comment was sent for approval": "Din kommentar er sendt til godkjenning",
-          "credit:": "credit:"
+          "Your comment is being reviewed and will be published as soon as it's approved": "Din kommentar blir gjennomgått og vil bli publisert så snart den er godkjent",
+          "credit:": "credit:",
+          "Activate": "Aktiver"
         }, "ro": {
           "Highlights": "Repere",
           "Comment by": "Comentariu de",
@@ -614,9 +695,10 @@
           "See new updates": "Vezi articole noi",
           "Send": "Trimite",
           "Sort by:": "Ordonează după:",
-          "Your comment was sent for approval": "Comentariul tău a fost trimis spre aprobare",
-          "credit:": "credit:"
-        }, "se": {
+          "Your comment is being reviewed and will be published as soon as it's approved": "Comentariul dvs. este revizuit și va fi publicat de îndată ce va fi aprobat",
+          "credit:": "credit:",
+          "Activate": "Activati"
+        }, "sv": {
             "Highlights": "Höjdpunkter",
             "Comment by": "Kommentar av",
             "Powered by": "Powered by",
@@ -646,8 +728,9 @@
             "Show highlighted post only": "Visa endast höjdpunkter",
             "Sort by:": "Sortera enligt:",
             "Updated": "Uppdaterat",
-            "Your comment was sent for approval": "Din kommentar väntar på att godkännas",
-            "credit:": "källa:"
+            "Your comment is being reviewed and will be published as soon as it's approved": "Din kommentar granskas och publiceras så snart den godkänns",
+            "credit:": "källa:",
+            "Activate": "Aktivera"
         }, "sr": {
             "Highlights": "Najvažnije",
             "Comment by": "Komentar postavio",
@@ -677,8 +760,9 @@
             "Show highlighted post only": "Prikaži najvažnije postove",
             "Sort by:": "Sortiraj:",
             "Updated": "Ažurirano",
-            "Your comment was sent for approval": "Vaš komentar je poslat na odobrenje",
-            "credit:": "autor:"
+            "Your comment is being reviewed and will be published as soon as it's approved": "Vaš komentar se pregledava i biće objavljen čim bude odobren",
+            "credit:": "autor:",
+            "Activate": "Aktivirati"
         }, "sr-cy": {
             "Highlights": "Најважније",
             "Comment by": "Коментар поставио",
@@ -708,8 +792,73 @@
             "Show highlighted post only": "Прикажи најважније постове",
             "Sort by:": "Сортирај:",
             "Updated": "Ажурирано",
-            "Your comment was sent for approval": "Ваш коментар је послат на одобрење",
-            "credit:": "аутор:"
+            "Your comment is being reviewed and will be published as soon as it's approved": "Ваш коментар се прегледава и биће објављен чим буде одобрен",
+            "credit:": "аутор:",
+            "Activate": "Активирати"
+        }, "es": {
+            "Highlights": "Destacados",
+            "Comment by": "Comentario por",
+            "Powered by": "Powered by",
+            "Advertisement": "Publicidad",
+            "Cancel": "Cancelar",
+            "Comment": "Comentar",
+            "Comment *": "Comentario *",
+            "Comment should be maximum 300 characters in length": "El comentario debe tener una longitud máxima de 300 caracteres",
+            "Editorial": "Editorial",
+            "Load more posts": "Cargar más entradas",
+            "Loading": "Cargando",
+            "Name *": "Nombre *",
+            "Name should be maximum 30 characters in length": "El nombre debe tener una longitud máxima de 30 carateres",
+            "Newest first": "Nuevos primero",
+            "No posts for now": "No hay artículos por ahora",
+            "Oldest first": "Antiguos primero",
+            "One pinned post": "Un artículo fijado",
+            "pinned posts": "artículos fijados",
+            "Please fill in your Comment": "Por favor complete su Comentario",
+            "Please fill in your Name": "Por favor complete su Nombre",
+            "Post a comment": "Publicar comentario",
+            "See one new update": "Ver actualización",
+            "See new updates": "Ver actualizaciones",
+            "Send": "Envíado",
+            "Show all posts": "Mostrar todos los artículos",
+            "Show highlighted post only": "Mostrar solo los artículos destacados",
+            "Sort by:": "Ordenar por",
+            "Updated": "Actualizado",
+            "Your comment is being reviewed and will be published as soon as it's approved": "Su comentario se está revisando y se publicará tan pronto como se apruebe",
+            "credit:": "Crédito:",
+            "Activate": "Activar"
+        }, "pt": {
+            "Highlights": "Em foco",
+            "Comment by": "Comentado por",
+            "Powered by": "Alimenté par",
+            "Advertisement": "Publicidade",
+            "Cancel": "Cancelar",
+            "Comment": "Comentário",
+            "Comment *": "Comentário *",
+            "Comment should be maximum 300 characters in length": "Um comentário deve conter no máximo 300 caracteres",
+            "Editorial": "Editorial",
+            "Load more posts": "Carregar mais",
+            "Loading": "Carregando",
+            "Name *": "Nome *",
+            "Name should be maximum 30 characters in length": "O nome deve conter no máximo 30 caracteres",
+            "Newest first": "Mais recentes no topo",
+            "No posts for now": "Nenhum conteúdo no momento",
+            "Oldest first": "Mais antigos no topo",
+            "One pinned post": "Conteúdo fixado",
+            "pinned posts": "Conteúdos fixados",
+            "Please fill in your Comment": "Escreva aqui",
+            "Please fill in your Name": "Escreva seu nome",
+            "Post a comment": "Enviar comentário",
+            "See one new update": "Ver a nova mensagem",
+            "See new updates": "Ver novas mensagens",
+            "Send": "Enviar",
+            "Show all posts": "Mostrar todas publicações",
+            "Show highlighted post only": "Mostrar apenas publicações em foco",
+            "Sort by:": "Filtrar por:",
+            "Updated": "Atualizar",
+            "Your comment is being reviewed and will be published as soon as it's approved": "Seu comentário aguarda aprovação",
+            "credit:": "crédito:",
+            "Activate": "Ativar"
         }
     }
 }

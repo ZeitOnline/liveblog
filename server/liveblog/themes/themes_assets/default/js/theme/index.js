@@ -9,14 +9,17 @@ const handlers = require('./handlers'),
   view = require('./view'),
   pageview = require('./pageview'),
   localAnalytics = require('./local-analytics'),
-  adsManager = require('./ads-manager');
+  videoObserver = require('./video-observer'),
+  adsManager = require('./ads-manager'),
+  gdpr = require('./gdpr');
 
-require("iframe-resizer/js/iframeResizer.contentWindow.min.js");
+require('iframe-resizer/js/iframeResizer.contentWindow.min.js');
 module.exports = {
   /**
    * On document loaded, do the following:
    */
   init: function() {
+    gdpr.init();
     handlers.buttons.attach(); // Register Buttons Handlers
     handlers.events.attach(); // Register Event, Message Handlers
     viewmodel.init();
@@ -24,6 +27,7 @@ module.exports = {
     pageview.init();
 
     adsManager.init();
+    videoObserver.init();
 
     view.updateTimestamps();
     setInterval(() => {

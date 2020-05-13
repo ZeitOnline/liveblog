@@ -9,6 +9,7 @@ module.exports = {
                 'fonts/**/*',
                 'images/**/*',
                 'favicon.ico',
+                'favicon-alert.ico',
                 'styles/css/*.css'
             ]
         },
@@ -20,7 +21,26 @@ module.exports = {
             src: [
                 'scripts/**/*.html',
             ]
-        }]
+        },
+        // we have a few templates override of superdesk.core.menu app
+        {
+            expand: true,
+            dot: true,
+            cwd: 'app/template/core/',
+            dest: '<%= distDir %>/scripts/core/',
+            src: [
+                '**/*.html',
+            ]
+        },
+        {
+            expand: true,
+            dot: true,
+            cwd: 'app/template/superdesk-override/',
+            dest: '<%= distDir %>/scripts/',
+            src: [
+                '**/*.html',
+            ]
+        }],
     },
     locales: {
         files: [
