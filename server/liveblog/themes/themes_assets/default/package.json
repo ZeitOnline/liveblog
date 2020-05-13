@@ -8,6 +8,9 @@
   "scripts": {
     "build": "gulp"
   },
+  "resolutions": {
+    "graceful-fs": "4.2.3"
+  },
   "dependencies": {
     "amphtml-validator": "^1.0.23",
     "babel-core": "^6.26.3",
@@ -17,7 +20,7 @@
     "browserify": "^16.2.0",
     "del": "^3.0.0",
     "eslint": "^4.19.1",
-    "graceful-fs": "^4.1.11",
+    "graceful-fs": "4.2.3",
     "gulp": "^3.9.1",
     "gulp-autoprefixer": "^5.0.0",
     "gulp-clean-css": "^3.9.4",
@@ -46,6 +49,7 @@
     "lory.js": "^2.5.3",
     "moment": "^2.18.1",
     "natives": "^1.1.6",
+    "node": "11.1.0",
     "npm-exists": "^1.0.1",
     "nunjucks": "3.1.2",
     "nunjucks-date-filter": "^0.1.1",
