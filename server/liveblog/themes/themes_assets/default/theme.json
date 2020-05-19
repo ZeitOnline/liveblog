@@ -1,7 +1,7 @@
 {
     "label": "ZEIT ONLINE Default Theme",
     "name": "zon-default",
-    "version": "3.6.1",
+    "version": "3.6.2",
     "asyncTheme": true,
     "seoTheme": true,
     "author": "ZEIT ONLINE <kontakt@zeit.de>",
@@ -21,9 +21,9 @@
     },
     "license": "AGPL-3.0",
     "devStyles": ["dist/zon-default-ec68f69b43.css"],
-    "devScripts": ["dist/zon-default-4999622d39.js"],
+    "devScripts": ["dist/zon-default-28192ba098.js"],
     "styles": ["dist/zon-default-ec68f69b43.css"],
-    "scripts": ["dist/zon-default-4999622d39.js"],
+    "scripts": ["dist/zon-default-28192ba098.js"],
     "options": [
         {
             "name": "language",

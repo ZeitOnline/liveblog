@@ -9,6 +9,7 @@ const handlers = require('./handlers'),
   view = require('./view'),
   pageview = require('./pageview'),
   localAnalytics = require('./local-analytics'),
+  settings = window.LB.settings,
   videoObserver = require('./video-observer'),
   adsManager = require('./ads-manager'),
   gdpr = require('./gdpr');
